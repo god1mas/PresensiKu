@@ -6,6 +6,7 @@ import '../core/design/app_theme.dart';
 import '../core/design/tokens.dart';
 import '../features/academics/presentation/class_screens.dart';
 import '../features/academics/presentation/roster_screens.dart';
+import '../features/attendance/presentation/attendance_screens.dart';
 import '../features/dashboard/presentation/dashboard_screen.dart';
 import '../features/onboarding/presentation/onboarding_screens.dart';
 import 'phase2_tabs.dart';
@@ -17,6 +18,20 @@ final appRouterProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: '/onboarding',
         builder: (context, state) => const OnboardingScreen(),
+      ),
+      GoRoute(
+        path: '/absensi',
+        builder: (context, state) => const AttendanceSetupScreen(),
+      ),
+      GoRoute(
+        path: '/absensi/sukses/:id',
+        builder: (context, state) =>
+            AttendanceSuccessScreen(id: int.parse(state.pathParameters['id']!)),
+      ),
+      GoRoute(
+        path: '/absensi/:id',
+        builder: (context, state) =>
+            AttendanceRecordScreen(id: int.parse(state.pathParameters['id']!)),
       ),
       ShellRoute(
         builder: (context, state, child) => AppShell(child: child),
@@ -56,10 +71,6 @@ final appRouterProvider = Provider<GoRouter>((ref) {
           GoRoute(
             path: '/mata-pelajaran',
             builder: (context, state) => const SubjectScreen(),
-          ),
-          GoRoute(
-            path: '/absensi',
-            builder: (context, state) => const AttendanceGateScreen(),
           ),
         ],
       ),

@@ -40,5 +40,14 @@
 - Verification: `dart format lib test` passed; `flutter analyze --no-pub` found no issues; `flutter test --no-pub` passed 11/11 tests, including restart persistence, student-number and assignment uniqueness, UI navigation, and unchanged completed-session snapshots after master-data edits/archives. `flutter build apk --debug` succeeded.
 - Design review: Class roster and subject list follow Figma frames 06 and 08 with overview cards, search/list patterns, and add actions. Device-level visual and responsive checks remain in PHASE 9.
 - Remaining issues: Attendance creation and recording are PHASE 5. No Android device or emulator is connected. GitHub push remains rejected by automatic approval review.
-- Commit: pending local Phase 4 commit.
+- Commit: `02419ed` (local). Push remains blocked by the prior approval rejection.
+
+## PHASE 5 — Attendance Engine
+
+- Status: PASS (2026-11-11)
+- Implementation: Session setup selects active class, linked subject, date, and meeting number. Existing keys reopen their draft or saved detail instead of creating duplicates. New drafts capture a frozen student roster with all statuses unmarked. H/S/I/A marks persist immediately, progress and remaining count update, bulk Hadir requires confirmation, and completion validates all records in a SQLite transaction. A success screen shows status totals.
+- Verification: `dart format lib test` passed; `flutter analyze --no-pub` found no issues; `flutter test --no-pub` passed 15/15 tests. Coverage includes duplicate detection, draft recovery after database reopen, atomic rejection of incomplete sessions, 40-student roster freezing, bulk marking, full UI flow, and 40-student scrolling at a 320-pixel viewport. `flutter build apk --debug` succeeded.
+- Design review: Setup, status controls, progress card, confirmation, sticky save action, and success screen follow Figma frames 09–11 and 10A/10B. Device-level visual review remains in PHASE 9.
+- Remaining issues: Saved-session corrections, history filters, and summary recalculation belong to PHASE 6. No Android device or emulator is connected. GitHub push remains rejected by automatic approval review.
+- Commit: pending local Phase 5 commit.
 
