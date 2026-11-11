@@ -8,6 +8,7 @@ import '../features/academics/presentation/class_screens.dart';
 import '../features/academics/presentation/roster_screens.dart';
 import '../features/attendance/presentation/attendance_screens.dart';
 import '../features/dashboard/presentation/dashboard_screen.dart';
+import '../features/history/presentation/history_screens.dart';
 import '../features/onboarding/presentation/onboarding_screens.dart';
 import 'phase2_tabs.dart';
 
@@ -54,11 +55,11 @@ final appRouterProvider = Provider<GoRouter>((ref) {
           ),
           GoRoute(
             path: '/riwayat',
-            builder: (context, state) => const HistoryTab(),
+            builder: (context, state) => const HistoryScreen(),
             routes: [
               GoRoute(
                 path: ':id',
-                builder: (context, state) => HistoryReadOnlyDetail(
+                builder: (context, state) => HistoryDetailScreen(
                   id: int.parse(state.pathParameters['id']!),
                 ),
               ),

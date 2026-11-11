@@ -49,5 +49,14 @@
 - Verification: `dart format lib test` passed; `flutter analyze --no-pub` found no issues; `flutter test --no-pub` passed 15/15 tests. Coverage includes duplicate detection, draft recovery after database reopen, atomic rejection of incomplete sessions, 40-student roster freezing, bulk marking, full UI flow, and 40-student scrolling at a 320-pixel viewport. `flutter build apk --debug` succeeded.
 - Design review: Setup, status controls, progress card, confirmation, sticky save action, and success screen follow Figma frames 09–11 and 10A/10B. Device-level visual review remains in PHASE 9.
 - Remaining issues: Saved-session corrections, history filters, and summary recalculation belong to PHASE 6. No Android device or emulator is connected. GitHub push remains rejected by automatic approval review.
-- Commit: pending local Phase 5 commit.
+- Commit: `14e474b` (local). Push remains blocked by the prior approval rejection.
+
+## PHASE 6 — History and Corrections
+
+- Status: PASS (2026-11-11)
+- Implementation: Completed sessions appear in searchable history with class, subject, and date-range filters. Detail shows saved roster snapshots and live H/S/I/A totals. A teacher can correct a saved status; SQLite updates the record transactionally, and the summary is recalculated from records. Archived or renamed master data does not rewrite saved snapshots.
+- Verification: `dart format lib test` passed; `flutter analyze --no-pub` found no issues; `flutter test --no-pub` passed 16/16 tests. Tests cover query filters, correction counts, persistence after reopening SQLite, empty history, and UI navigation from success to correction. `flutter build apk --debug` succeeded.
+- Design review: History filters/list and detail overview/summary follow Figma frames 12 and 13. Device-level visual review remains in PHASE 9.
+- Remaining issues: Cross-session summaries and Excel export are PHASE 7. No Android device or emulator is connected. GitHub push remains rejected by automatic approval review.
+- Commit: pending local Phase 6 commit.
 

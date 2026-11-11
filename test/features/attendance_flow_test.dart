@@ -106,6 +106,33 @@ void main() {
     await tester.pumpAndSettle();
     expect(find.text('Sip, absensi tersimpan!'), findsOneWidget);
 
+    await tester.scrollUntilVisible(
+      find.text('Lihat rekap'),
+      200,
+      scrollable: find.byType(Scrollable).last,
+    );
+    await tester.tap(find.text('Lihat rekap'));
+    await tester.runAsync(
+      () => Future<void>.delayed(const Duration(milliseconds: 100)),
+    );
+    await tester.pumpAndSettle();
+    expect(find.text('Detail absensi'), findsOneWidget);
+    await tester.tap(find.text('Edit absensi'));
+    await tester.pumpAndSettle();
+    await tester.scrollUntilVisible(
+      find.text('Ahmad'),
+      200,
+      scrollable: find.byType(Scrollable).last,
+    );
+    await tester.tap(find.widgetWithText(TextButton, 'Hadir').first);
+    await tester.pumpAndSettle();
+    await tester.tap(find.widgetWithText(SimpleDialogOption, 'Sakit'));
+    await tester.runAsync(
+      () => Future<void>.delayed(const Duration(milliseconds: 100)),
+    );
+    await tester.pumpAndSettle();
+    expect(find.text('Sakit'), findsWidgets);
+
     await tester.pumpWidget(const SizedBox.shrink());
     await tester.runAsync(app.close);
   });
