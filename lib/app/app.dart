@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 
 import '../core/design/app_theme.dart';
 import '../core/design/tokens.dart';
+import '../features/academics/presentation/class_screens.dart';
 import '../features/dashboard/presentation/dashboard_screen.dart';
 import '../features/onboarding/presentation/onboarding_screens.dart';
 import 'phase2_tabs.dart';
@@ -25,11 +26,11 @@ final appRouterProvider = Provider<GoRouter>((ref) {
           ),
           GoRoute(
             path: '/kelas',
-            builder: (context, state) => const ClassesTab(),
+            builder: (context, state) => const ClassListScreen(),
             routes: [
               GoRoute(
                 path: ':id',
-                builder: (context, state) => ClassReadOnlyDetail(
+                builder: (context, state) => ClassDetailScreen(
                   id: int.parse(state.pathParameters['id']!),
                 ),
               ),

@@ -67,8 +67,15 @@ class DashboardRepository {
 
   Future<DashboardSummary> load() async {
     final counts = await Future.wait([
-      _count('SELECT count(*) FROM school_class WHERE archived_at IS NULL'),
-      _count('SELECT count(*) FROM student WHERE archived_at IS NULL'),
+      _count('''SELECT count(*) FROM school_class c
+        JOIN academic_period p ON p.id = c.period_id
+        WHERE c.archived_at IS NULL AND p.is_active = 1'''),
+      _count(
+        '''SELECT count(*) FROM student s
+        JOIN school_class c ON c.id = s.class_id
+        JOIN academic_period p ON p.id = c.period_id
+        WHERE s.archived_at IS NULL AND c.archived_at IS NULL AND p.is_active = 1''',
+      ),
       _count('SELECT count(*) FROM subject WHERE archived_at IS NULL'),
       _count(
         "SELECT count(*) FROM attendance_session WHERE state = 'completed'",
@@ -78,7 +85,8 @@ class DashboardRepository {
       '''SELECT c.id, c.name, count(s.id) AS student_count
          FROM school_class c
          LEFT JOIN student s ON s.class_id = c.id AND s.archived_at IS NULL
-         WHERE c.archived_at IS NULL
+         JOIN academic_period p ON p.id = c.period_id
+         WHERE c.archived_at IS NULL AND p.is_active = 1
          GROUP BY c.id
          ORDER BY c.name COLLATE NOCASE
          LIMIT 4''',

@@ -22,5 +22,14 @@
 - Verification: `dart format lib test` passed; `flutter analyze --no-pub` found no issues; `flutter test --no-pub` passed 5/5 tests. Tests cover profile persistence after database close/reopen, dashboard metrics, first launch and restart routing, and empty class/history navigation. `flutter build apk --debug` produced `build/app/outputs/flutter-apk/app-debug.apk` (213,429,154 bytes).
 - Design review: Splash, onboarding, and dashboard use the corresponding Figma layout, assets, colors, and typography. A rendered-device pixel comparison remains for PHASE 9 because no Android device or emulator is connected.
 - Remaining issues: Attendance entry and master-data editing belong to later phases. The prior GitHub push rejection remains in effect; do not use another route to publish the project.
-- Commit: pending local Phase 2 commit.
+- Commit: `fc4f195` (local). Push remains blocked by the prior approval rejection.
+
+## PHASE 3 — Classes and Academic Periods
+
+- Status: PASS (2026-11-11)
+- Implementation: Academic periods can be created, selected, and made active. Classes are scoped to their period and can be created, searched, viewed, renamed, and archived. Archiving also removes active students and subject assignments from current lists while retaining historical attendance snapshots. Dashboard class/student metrics and shortcuts follow the active period. SQLite enforces duplicate active names per period.
+- Verification: `dart format lib test` passed; `flutter analyze --no-pub` found no issues; `flutter test --no-pub` passed 8/8 tests, including CRUD, duplicate validation, period isolation, persistence after reopening SQLite, and class UI navigation; `flutter build apk --debug` succeeded.
+- Design review: Class list follows Figma frame 04's heading, search, featured class, list, and full-width add action. Full rendered-device comparison and the class detail's student/subject sections remain for the later feature and QA phases.
+- Remaining issues: Student and subject editing/assignment are PHASE 4. No Android device or emulator is connected. GitHub push remains rejected by automatic approval review.
+- Commit: pending local Phase 3 commit.
 
