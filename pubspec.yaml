@@ -1,4 +1,4 @@
-﻿name: presensiku
+name: presensiku
 description: "PresensiKu, aplikasi absensi guru yang bekerja sepenuhnya offline."
 # The following line prevents the package from being accidentally published to
 # pub.dev using `flutter pub publish`. This is preferred for private packages.
@@ -69,6 +69,7 @@ flutter:
   uses-material-design: true
   assets:
     - assets/brand/presensiku_emblem.svg
+    - assets/figma/
   fonts:
     - family: Nunito
       fonts:
@@ -107,4 +108,3 @@ flutter:
   #
   # For details regarding fonts from package dependencies,
   # see https://flutter.dev/to/font-from-package
-
