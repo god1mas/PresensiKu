@@ -76,5 +76,19 @@
 - Verification: `flutter pub get` passed; `dart format lib test` passed; `flutter analyze --no-pub` found no issues; `flutter test --no-pub` passed 22/22 tests, including full backup round-trip, corrupt/incompatible rejection, failed-restore rollback, and save/restore confirmation UI. `flutter build apk --debug` succeeded.
 - Design review: Settings, backup, restore, and academic period screens were compared with Figma frames 16 and 16A–D. Native document picker and rendered-device review remain unverified because no Android device or emulator is connected.
 - Remaining issues: Final offline/device QA and release APK belong to PHASE 9. GitHub push remains rejected by automatic approval review.
-- Commit: pending local Phase 8 commit.
+- Commit: `233e820` (local). Push remains blocked by the prior approval rejection.
+
+## PHASE 9 — Final QA and Android Release
+
+- Status: PASS for local automated and APK verification (2026-11-11). Android device acceptance and production signing remain pending; this is not a claim of full device verification.
+- Implementation: Preserved Phase 0–8 work, added a realistic 40-student workflow test, packaged the supplied PresensiKu launcher logo at five densities, documented installation and manual QA, and excluded generated Kotlin cache files from Git.
+- Verification: Fresh `flutter analyze` found no issues; the complete `flutter test --reporter expanded` suite passed 23/23 tests. Prior final formatting passed. The interrupted release build stalled during dependency downloads; it was cancelled and restarted with a diagnostic log. `flutter build apk --release -v` completed successfully (exit 0).
+- APK: `C:\Project\PresensiKu\build\app\outputs\flutter-apk\app-release.apk`; 58,030,917 bytes; SHA-256 `5B06C3CD11DCDD15652C073A8AC3F8C7416FE2DADDC4F51F06ABB9C8C96EBD5A`.
+- Package verification: `aapt dump badging` confirms `com.presensiku.presensiku`, version `1.0.0` / code `1`, label `PresensiKu`, minimum API 24, target API 36, and launcher activity `com.presensiku.presensiku.MainActivity`. The packaged launcher PNG was extracted and visually checked. The release manifest has no INTERNET permission.
+- Signing: `apksigner verify --verbose --print-certs` passes with APK Signature Scheme v2. Certificate identity is `C=US, O=Android, CN=Android Debug`. This is a release-mode APK signed with the debug key, suitable for local QA; an owner-controlled production signing configuration is still required for production distribution. No credentials are committed.
+- Device QA: `adb devices` returned no attached devices; no emulator executable was installed. Installation, launch, Android file picker/share sheet, airplane mode, and rendered Figma comparisons remain unverified. Follow `ANDROID_QA_CHECKLIST.md` and record results before daily use.
+- Database scope: Schema v1 creation and reopening are tested. No historical schema upgrade exists yet, so no migration from an earlier released version is claimed.
+- Commit: Final local checkpoint includes this report, README, manual QA checklist, launcher icons, and realistic workflow test. Use `git log -1 --oneline` for its identifier.
+- GitHub: No push attempted. The prior automatic approval denial remains in force; remote synchronization requires explicit authorization and approval by the applicable mechanism.
+- Exact next task: Install this APK on an Android API 24+ device, complete the manual QA checklist, then configure owner-controlled production signing if distribution is intended.
 
