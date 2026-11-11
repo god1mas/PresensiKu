@@ -126,7 +126,7 @@ class HistoryRepository {
 
   Future<List<HistoryOption>> classOptions() async {
     final rows = await database.rawQuery(
-      "SELECT DISTINCT class_id AS id, class_name_snapshot AS name FROM attendance_session WHERE state = 'completed' ORDER BY name COLLATE NOCASE",
+      "SELECT class_id AS id, class_name_snapshot AS name FROM attendance_session AS sess WHERE state = 'completed' AND id = (SELECT MAX(latest.id) FROM attendance_session AS latest WHERE latest.state = 'completed' AND latest.class_id = sess.class_id) ORDER BY name COLLATE NOCASE",
     );
     return rows
         .map((row) => HistoryOption(row['id'] as int, row['name'] as String))
@@ -135,7 +135,7 @@ class HistoryRepository {
 
   Future<List<HistoryOption>> subjectOptions() async {
     final rows = await database.rawQuery(
-      "SELECT DISTINCT subject_id AS id, subject_name_snapshot AS name FROM attendance_session WHERE state = 'completed' ORDER BY name COLLATE NOCASE",
+      "SELECT subject_id AS id, subject_name_snapshot AS name FROM attendance_session AS sess WHERE state = 'completed' AND id = (SELECT MAX(latest.id) FROM attendance_session AS latest WHERE latest.state = 'completed' AND latest.subject_id = sess.subject_id) ORDER BY name COLLATE NOCASE",
     );
     return rows
         .map((row) => HistoryOption(row['id'] as int, row['name'] as String))

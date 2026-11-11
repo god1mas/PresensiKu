@@ -36,6 +36,13 @@ class _HistoryScreenState extends ConsumerState<HistoryScreen> {
     return Scaffold(
       appBar: AppBar(
         toolbarHeight: 90,
+        actions: [
+          IconButton(
+            onPressed: () => context.push('/laporan'),
+            tooltip: 'Rekap dan laporan',
+            icon: const Icon(Icons.summarize_outlined),
+          ),
+        ],
         title: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [

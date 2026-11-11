@@ -58,5 +58,14 @@
 - Verification: `dart format lib test` passed; `flutter analyze --no-pub` found no issues; `flutter test --no-pub` passed 16/16 tests. Tests cover query filters, correction counts, persistence after reopening SQLite, empty history, and UI navigation from success to correction. `flutter build apk --debug` succeeded.
 - Design review: History filters/list and detail overview/summary follow Figma frames 12 and 13. Device-level visual review remains in PHASE 9.
 - Remaining issues: Cross-session summaries and Excel export are PHASE 7. No Android device or emulator is connected. GitHub push remains rejected by automatic approval review.
-- Commit: pending local Phase 6 commit.
+- Commit: `d2ac150` (local). Push remains blocked by the prior approval rejection.
+
+## PHASE 7 — Reports and Excel Export
+
+- Status: PASS (2026-11-11)
+- Implementation: Reports filter completed attendance by class, subject, academic period, and date range. Student totals and percentages use each student's own completed records, so changing rosters does not distort the denominator. Export creates two formatted `.xlsx` sheets, Detail Absensi and Rekap Absensi. Settings and history link to reports; save and share actions show a success state after delivery.
+- Verification: `dart format lib test` passed; `flutter analyze --no-pub` found no issues; `flutter test --no-pub` passed 18/18 tests. Tests cover filtered summaries, per-student denominators, empty reports, workbook decoding and structure, report navigation, save/share action wiring, and XLSX bytes. `flutter build apk --debug` succeeded.
+- Design review: Report summary, filters, export card, actions, and success dialog follow Figma frames 14 and 15. Device-level rendering, native file picker, and Android share sheet remain unverified because no Android device or emulator is connected.
+- Remaining issues: Full database backup/restore belongs to PHASE 8. GitHub push remains rejected by automatic approval review.
+- Commit: pending local Phase 7 commit.
 

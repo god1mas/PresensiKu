@@ -27,5 +27,5 @@ SQLite is the sole operational datastore. The schema is versioned in `lib/core/d
 
 ## Current scope
 
-The foundation, teacher onboarding, dashboard, academic data, attendance recording, history, and saved-session corrections are implemented. Reports and backup workflows are developed in later phases; see the progress document for verified status. Do not use the current APK for real attendance records until the relevant phases pass.
+The foundation, teacher onboarding, dashboard, academic data, attendance recording, history, saved-session corrections, and Excel reports are implemented. Backup and restore are developed in the next phase; see the progress document for verified status. Do not use the current APK for real attendance records until the relevant phases pass.
 

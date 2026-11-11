@@ -293,6 +293,12 @@ class SettingsTab extends ConsumerWidget {
                     trailing: const Icon(Icons.chevron_right),
                     onTap: () => context.push('/mata-pelajaran'),
                   ),
+                  ListTile(
+                    leading: const Icon(Icons.summarize_outlined),
+                    title: const Text('Rekap dan laporan'),
+                    trailing: const Icon(Icons.chevron_right),
+                    onTap: () => context.push('/laporan'),
+                  ),
                 ],
               ),
       ),

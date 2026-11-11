@@ -10,6 +10,8 @@ import '../features/attendance/presentation/attendance_screens.dart';
 import '../features/dashboard/presentation/dashboard_screen.dart';
 import '../features/history/presentation/history_screens.dart';
 import '../features/onboarding/presentation/onboarding_screens.dart';
+import '../features/reports/data/report_repository.dart';
+import '../features/reports/presentation/report_screens.dart';
 import 'phase2_tabs.dart';
 
 final appRouterProvider = Provider<GoRouter>((ref) {
@@ -33,6 +35,16 @@ final appRouterProvider = Provider<GoRouter>((ref) {
         path: '/absensi/:id',
         builder: (context, state) =>
             AttendanceRecordScreen(id: int.parse(state.pathParameters['id']!)),
+      ),
+      GoRoute(
+        path: '/laporan',
+        builder: (context, state) => const ReportScreen(),
+      ),
+      GoRoute(
+        path: '/laporan/ekspor',
+        builder: (context, state) => ReportExportScreen(
+          initialFilter: state.extra as ReportFilter? ?? const ReportFilter(),
+        ),
       ),
       ShellRoute(
         builder: (context, state, child) => AppShell(child: child),
