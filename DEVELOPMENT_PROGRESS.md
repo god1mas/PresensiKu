@@ -31,5 +31,14 @@
 - Verification: `dart format lib test` passed; `flutter analyze --no-pub` found no issues; `flutter test --no-pub` passed 8/8 tests, including CRUD, duplicate validation, period isolation, persistence after reopening SQLite, and class UI navigation; `flutter build apk --debug` succeeded.
 - Design review: Class list follows Figma frame 04's heading, search, featured class, list, and full-width add action. Full rendered-device comparison and the class detail's student/subject sections remain for the later feature and QA phases.
 - Remaining issues: Student and subject editing/assignment are PHASE 4. No Android device or emulator is connected. GitHub push remains rejected by automatic approval review.
-- Commit: pending local Phase 3 commit.
+- Commit: `5d8219c` (local). Push remains blocked by the prior approval rejection.
+
+## PHASE 4 — Students and Subjects
+
+- Status: PASS (2026-11-11)
+- Implementation: Students can be added, edited, searched by name/number, sorted by attendance number, and archived from their class. Subjects can be added, renamed, archived, linked to multiple classes, and unlinked. Forms validate required names and positive attendance numbers. Active duplicates are rejected by SQLite indexes. Class detail shows its roster and subject links; settings opens subject management.
+- Verification: `dart format lib test` passed; `flutter analyze --no-pub` found no issues; `flutter test --no-pub` passed 11/11 tests, including restart persistence, student-number and assignment uniqueness, UI navigation, and unchanged completed-session snapshots after master-data edits/archives. `flutter build apk --debug` succeeded.
+- Design review: Class roster and subject list follow Figma frames 06 and 08 with overview cards, search/list patterns, and add actions. Device-level visual and responsive checks remain in PHASE 9.
+- Remaining issues: Attendance creation and recording are PHASE 5. No Android device or emulator is connected. GitHub push remains rejected by automatic approval review.
+- Commit: pending local Phase 4 commit.
 

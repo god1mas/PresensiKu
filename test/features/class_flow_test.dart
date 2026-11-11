@@ -80,6 +80,52 @@ void main() {
     expect(find.text('Detail Kelas'), findsOneWidget);
     expect(find.text('0 siswa'), findsOneWidget);
 
+    await tester.tap(find.text('+ Tambah siswa'));
+    await tester.pumpAndSettle();
+    await tester.enterText(find.byType(TextFormField).at(0), 'Ahmad Fauzi');
+    await tester.enterText(find.byType(TextFormField).at(1), '1');
+    await tester.tap(find.text('Simpan'));
+    await tester.runAsync(
+      () => Future<void>.delayed(const Duration(milliseconds: 100)),
+    );
+    await tester.pumpAndSettle();
+    expect(find.text('Ahmad Fauzi'), findsOneWidget);
+    expect(find.text('1 siswa'), findsOneWidget);
+
+    await tester.drag(find.byType(ListView).last, const Offset(0, -450));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Atur'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Kelola mata pelajaran'));
+    await tester.runAsync(
+      () => Future<void>.delayed(const Duration(milliseconds: 100)),
+    );
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('+ Tambah mata pelajaran'));
+    await tester.pumpAndSettle();
+    await tester.enterText(find.byType(TextFormField).last, 'Matematika');
+    await tester.tap(find.text('Simpan'));
+    await tester.runAsync(
+      () => Future<void>.delayed(const Duration(milliseconds: 100)),
+    );
+    await tester.pumpAndSettle();
+    expect(find.text('Matematika'), findsOneWidget);
+    await tester.pageBack();
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Atur'));
+    await tester.runAsync(
+      () => Future<void>.delayed(const Duration(milliseconds: 100)),
+    );
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Matematika'));
+    await tester.runAsync(
+      () => Future<void>.delayed(const Duration(milliseconds: 100)),
+    );
+    await tester.pumpAndSettle();
+    expect(find.text('Matematika'), findsOneWidget);
+
+    await tester.tap(find.byIcon(Icons.more_vert));
+    await tester.pumpAndSettle();
     await tester.tap(find.text('Ubah nama kelas'));
     await tester.pumpAndSettle();
     await tester.enterText(find.byType(TextFormField).last, 'VII B');
@@ -90,6 +136,8 @@ void main() {
     await tester.pumpAndSettle();
     expect(find.text('VII B'), findsOneWidget);
 
+    await tester.tap(find.byIcon(Icons.more_vert));
+    await tester.pumpAndSettle();
     await tester.tap(find.text('Arsipkan kelas'));
     await tester.pumpAndSettle();
     await tester.tap(find.text('Arsipkan').last);

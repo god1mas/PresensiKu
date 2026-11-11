@@ -287,6 +287,12 @@ class SettingsTab extends ConsumerWidget {
                     trailing: const Icon(Icons.chevron_right),
                     onTap: () => _editProfile(context, ref, data),
                   ),
+                  ListTile(
+                    leading: const Icon(Icons.menu_book_outlined),
+                    title: const Text('Mata pelajaran'),
+                    trailing: const Icon(Icons.chevron_right),
+                    onTap: () => context.push('/mata-pelajaran'),
+                  ),
                 ],
               ),
       ),

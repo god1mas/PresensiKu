@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 import '../../../core/design/tokens.dart';
 import '../../dashboard/data/dashboard_repository.dart';
 import '../data/class_repository.dart';
+import 'roster_screens.dart';
 
 class ClassListScreen extends ConsumerStatefulWidget {
   const ClassListScreen({super.key});
@@ -454,7 +455,31 @@ class _ClassDetailScreenState extends ConsumerState<ClassDetailScreen> {
       key: ValueKey(revision),
       future: repository.classById(widget.id),
       builder: (context, snapshot) => Scaffold(
-        appBar: AppBar(title: const Text('Detail Kelas')),
+        appBar: AppBar(
+          title: const Text('Detail Kelas'),
+          actions: [
+            if (snapshot.data != null)
+              PopupMenuButton<String>(
+                onSelected: (value) {
+                  if (value == 'rename') {
+                    rename(snapshot.data!);
+                  } else {
+                    archive(snapshot.data!);
+                  }
+                },
+                itemBuilder: (context) => const [
+                  PopupMenuItem(
+                    value: 'rename',
+                    child: Text('Ubah nama kelas'),
+                  ),
+                  PopupMenuItem(
+                    value: 'archive',
+                    child: Text('Arsipkan kelas'),
+                  ),
+                ],
+              ),
+          ],
+        ),
         body: !snapshot.hasData && !snapshot.hasError
             ? const Center(child: CircularProgressIndicator())
             : snapshot.data == null
@@ -467,22 +492,32 @@ class _ClassDetailScreenState extends ConsumerState<ClassDetailScreen> {
                     style: Theme.of(context).textTheme.headlineMedium,
                   ),
                   const SizedBox(height: AppSpace.sm),
-                  Text('${snapshot.data!.studentCount} siswa'),
+                  Container(
+                    padding: const EdgeInsets.all(AppSpace.lg),
+                    decoration: BoxDecoration(
+                      color: AppColors.lavender,
+                      borderRadius: BorderRadius.circular(AppRadius.featured),
+                    ),
+                    child: Row(
+                      children: [
+                        Text(
+                          '${snapshot.data!.studentCount}',
+                          style: Theme.of(context).textTheme.displaySmall,
+                        ),
+                        const SizedBox(width: AppSpace.base),
+                        const Text('siswa aktif'),
+                        const Spacer(),
+                        const Icon(Icons.people_outline, color: AppColors.blue),
+                      ],
+                    ),
+                  ),
                   const SizedBox(height: AppSpace.lg),
-                  ListTile(
-                    leading: const Icon(Icons.edit_outlined),
-                    title: const Text('Ubah nama kelas'),
-                    onTap: () => rename(snapshot.data!),
-                  ),
-                  ListTile(
-                    leading: const Icon(Icons.archive_outlined),
-                    title: const Text('Arsipkan kelas'),
-                    onTap: () => archive(snapshot.data!),
+                  StudentListPanel(
+                    classId: widget.id,
+                    onChanged: () => setState(() => revision++),
                   ),
                   const SizedBox(height: AppSpace.lg),
-                  const Text(
-                    'Daftar siswa dan mata pelajaran akan tersedia setelah data ditambahkan.',
-                  ),
+                  ClassSubjectPanel(classId: widget.id),
                 ],
               ),
       ),
