@@ -67,5 +67,14 @@
 - Verification: `dart format lib test` passed; `flutter analyze --no-pub` found no issues; `flutter test --no-pub` passed 18/18 tests. Tests cover filtered summaries, per-student denominators, empty reports, workbook decoding and structure, report navigation, save/share action wiring, and XLSX bytes. `flutter build apk --debug` succeeded.
 - Design review: Report summary, filters, export card, actions, and success dialog follow Figma frames 14 and 15. Device-level rendering, native file picker, and Android share sheet remain unverified because no Android device or emulator is connected.
 - Remaining issues: Full database backup/restore belongs to PHASE 8. GitHub push remains rejected by automatic approval review.
-- Commit: pending local Phase 7 commit.
+- Commit: `0620ff2` (local). Push remains blocked by the prior approval rejection.
+
+## PHASE 8 — Backup, Restore, and Settings
+
+- Status: PASS (2026-11-11)
+- Implementation: Settings now links to teacher profile editing, academic period selection, reports, and separate backup/restore screens following Figma 16 and 16A–D. A backup includes all eight operational SQLite tables in a versioned `.pkbackup` file with SHA-256 corruption detection. Restore previews the file, requires explicit confirmation, then replaces rows in one transaction with schema, constraint, foreign-key, and integrity checks. A failed restore rolls back. Period settings can create or reactivate a period without changing historical records.
+- Verification: `flutter pub get` passed; `dart format lib test` passed; `flutter analyze --no-pub` found no issues; `flutter test --no-pub` passed 22/22 tests, including full backup round-trip, corrupt/incompatible rejection, failed-restore rollback, and save/restore confirmation UI. `flutter build apk --debug` succeeded.
+- Design review: Settings, backup, restore, and academic period screens were compared with Figma frames 16 and 16A–D. Native document picker and rendered-device review remain unverified because no Android device or emulator is connected.
+- Remaining issues: Final offline/device QA and release APK belong to PHASE 9. GitHub push remains rejected by automatic approval review.
+- Commit: pending local Phase 8 commit.
 

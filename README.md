@@ -27,5 +27,5 @@ SQLite is the sole operational datastore. The schema is versioned in `lib/core/d
 
 ## Current scope
 
-The foundation, teacher onboarding, dashboard, academic data, attendance recording, history, saved-session corrections, and Excel reports are implemented. Backup and restore are developed in the next phase; see the progress document for verified status. Do not use the current APK for real attendance records until the relevant phases pass.
+The foundation, teacher onboarding, dashboard, academic data, attendance recording, history, saved-session corrections, Excel reports, and local backup/restore are implemented. A `.pkbackup` file contains all app data; save it using Pengaturan → Cadangkan data and restore it using Pengaturan → Pulihkan data. Restore replaces current data only after confirmation. See the progress document for verified status. Device-level checks and a release APK remain in the final phase.
 

@@ -12,6 +12,8 @@ import '../features/history/presentation/history_screens.dart';
 import '../features/onboarding/presentation/onboarding_screens.dart';
 import '../features/reports/data/report_repository.dart';
 import '../features/reports/presentation/report_screens.dart';
+import '../features/settings/presentation/backup_screen.dart';
+import '../features/settings/presentation/period_settings_screen.dart';
 import 'phase2_tabs.dart';
 
 final appRouterProvider = Provider<GoRouter>((ref) {
@@ -45,6 +47,18 @@ final appRouterProvider = Provider<GoRouter>((ref) {
         builder: (context, state) => ReportExportScreen(
           initialFilter: state.extra as ReportFilter? ?? const ReportFilter(),
         ),
+      ),
+      GoRoute(
+        path: '/cadangan',
+        builder: (context, state) => const BackupScreen(restoreMode: false),
+      ),
+      GoRoute(
+        path: '/pulihkan',
+        builder: (context, state) => const BackupScreen(restoreMode: true),
+      ),
+      GoRoute(
+        path: '/periode',
+        builder: (context, state) => const PeriodSettingsScreen(),
       ),
       ShellRoute(
         builder: (context, state, child) => AppShell(child: child),

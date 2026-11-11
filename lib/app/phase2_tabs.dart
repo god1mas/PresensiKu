@@ -265,14 +265,27 @@ class SettingsTab extends ConsumerWidget {
                   ),
                   const SizedBox(height: AppSpace.lg),
                   Card(
-                    color: AppColors.iceBlue,
+                    color: AppColors.blue,
                     child: ListTile(
-                      leading: const CircleAvatar(
-                        child: Icon(Icons.person_outline),
+                      leading: CircleAvatar(
+                        backgroundColor: Colors.white,
+                        child: Text(
+                          data.name
+                              .trim()
+                              .split(RegExp(r'\s+'))
+                              .take(2)
+                              .map((word) => word[0].toUpperCase())
+                              .join(),
+                          style: const TextStyle(color: AppColors.blue),
+                        ),
                       ),
-                      title: Text(data.name),
+                      title: Text(
+                        data.name,
+                        style: const TextStyle(color: Colors.white),
+                      ),
                       subtitle: Text(
                         data.schoolName ?? 'Nama sekolah belum diisi',
+                        style: const TextStyle(color: Colors.white),
                       ),
                     ),
                   ),
@@ -284,8 +297,16 @@ class SettingsTab extends ConsumerWidget {
                   ListTile(
                     leading: const Icon(Icons.edit_outlined),
                     title: const Text('Profil guru'),
+                    subtitle: const Text('Nama dan informasi sekolah'),
                     trailing: const Icon(Icons.chevron_right),
                     onTap: () => _editProfile(context, ref, data),
+                  ),
+                  ListTile(
+                    leading: const Icon(Icons.calendar_month_outlined),
+                    title: const Text('Tahun ajaran'),
+                    subtitle: const Text('Atur periode aktif'),
+                    trailing: const Icon(Icons.chevron_right),
+                    onTap: () => context.push('/periode'),
                   ),
                   ListTile(
                     leading: const Icon(Icons.menu_book_outlined),
@@ -298,6 +319,36 @@ class SettingsTab extends ConsumerWidget {
                     title: const Text('Rekap dan laporan'),
                     trailing: const Icon(Icons.chevron_right),
                     onTap: () => context.push('/laporan'),
+                  ),
+                  const SizedBox(height: AppSpace.lg),
+                  Text(
+                    'Data di perangkat',
+                    style: Theme.of(context).textTheme.titleLarge,
+                  ),
+                  ListTile(
+                    leading: const Icon(Icons.save_alt_outlined),
+                    title: const Text('Cadangkan data'),
+                    subtitle: const Text('Simpan salinan untuk berjaga-jaga'),
+                    trailing: const Icon(Icons.chevron_right),
+                    onTap: () => context.push('/cadangan'),
+                  ),
+                  ListTile(
+                    leading: const Icon(Icons.settings_backup_restore),
+                    title: const Text('Pulihkan data'),
+                    subtitle: const Text('Ambil salinan dari file cadangan'),
+                    trailing: const Icon(Icons.chevron_right),
+                    onTap: () => context.push('/pulihkan'),
+                  ),
+                  const SizedBox(height: AppSpace.lg),
+                  Container(
+                    padding: const EdgeInsets.all(AppSpace.base),
+                    decoration: BoxDecoration(
+                      color: AppColors.iceBlue,
+                      borderRadius: BorderRadius.circular(AppRadius.card),
+                    ),
+                    child: const Text(
+                      'Data disimpan di HP ini. Cadangkan secara berkala, ya!',
+                    ),
                   ),
                 ],
               ),
