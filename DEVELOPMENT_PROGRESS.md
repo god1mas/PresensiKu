@@ -150,3 +150,14 @@
 - GitHub: No push attempted. The prior automatic approval denial remains in force; remote synchronization requires explicit authorization and approval by the applicable mechanism.
 - Exact next task: Install this APK on an Android API 24+ device, complete the manual QA checklist, then configure owner-controlled production signing if distribution is intended.
 
+
+## KelasKu rebrand and class-first workflow (2026-11-14)
+
+- Status: PASS for source verification; Android device QA and a new APK remain pending.
+- Branding: Android launcher label, Flutter title, splash, onboarding, dashboard, settings footer, and export filenames now use KelasKu. The subtle brand signature is by god1mas. Existing launcher artwork has no old product text and remains recognizable.
+- Workflow: Mulai Kelas opens class selection, then class detail and a subject work area with functional Presensi and Penilaian actions. Presensi carries the chosen class and subject into its setup. The prior Detail Kelas student-summary and subject-card changes are preserved.
+- Data safety: Android application ID com.presensiku.presensiku, presensiku.db, schema/migrations, backup format identifier, and internal package names remain unchanged. Previous .pkbackup files remain selectable by extension.
+- Verification: dart format passed; flutter analyze --no-pub found no issues; flutter test --no-pub --reporter expanded passed 43/43 tests, including rebranded onboarding, class selection, contextual attendance, grading, backup, and Excel delivery.
+- Design reference: Figma V4 Detail Mata Pelajaran frame 72:112 retains the paired activity tiles and existing design tokens; no new static assets were required.
+- Release/device: No APK generated for this task. The existing app-release.apk is the older PresensiKu artifact. Native installation, offline operation, file picker/share, and rendered layout remain for the next Android QA task.
+- GitHub: No push attempted; prior approval denial remains in force.

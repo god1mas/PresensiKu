@@ -23,11 +23,13 @@ void main() {
     Uint8List? sharedBytes;
     final delivery = ReportDelivery(
       saveWorkbook: (filename, bytes) async {
+        expect(filename, startsWith('KelasKu_'));
         expect(filename, endsWith('.xlsx'));
         savedBytes = bytes;
         return Uri.parse('content://presensiku/report.xlsx');
       },
       shareWorkbook: (filename, bytes) async {
+        expect(filename, startsWith('KelasKu_'));
         expect(filename, endsWith('.xlsx'));
         sharedBytes = bytes;
         return true;

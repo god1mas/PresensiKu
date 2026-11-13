@@ -232,7 +232,7 @@ class _ReportExportScreenState extends ConsumerState<ReportExportScreen> {
       }
       final bytes = const XlsxExporter().build(report);
       final filename =
-          'PresensiKu_${DateFormat('yyyyMMdd_HHmm').format(DateTime.now())}.xlsx';
+          'KelasKu_${DateFormat('yyyyMMdd_HHmm').format(DateTime.now())}.xlsx';
       final delivery = ref.read(reportDeliveryProvider);
       final delivered = share
           ? await delivery.share(filename, bytes)

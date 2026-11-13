@@ -32,7 +32,7 @@ class _BackupScreenState extends ConsumerState<BackupScreen> {
     try {
       final bytes = await ref.read(backupRepositoryProvider).create();
       final filename =
-          'PresensiKu_${DateFormat('yyyyMMdd_HHmm').format(DateTime.now())}.pkbackup';
+          'KelasKu_${DateFormat('yyyyMMdd_HHmm').format(DateTime.now())}.pkbackup';
       final saved = await ref
           .read(backupDeliveryProvider)
           .save(filename, bytes);
@@ -159,7 +159,7 @@ class _BackupScreenState extends ConsumerState<BackupScreen> {
           child: Text(
             widget.restoreMode
                 ? 'Pilih file .pkbackup'
-                : 'PresensiKu_${DateFormat('yyyyMMdd_HHmm').format(DateTime.now())}.pkbackup',
+                : 'KelasKu_${DateFormat('yyyyMMdd_HHmm').format(DateTime.now())}.pkbackup',
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
           ),

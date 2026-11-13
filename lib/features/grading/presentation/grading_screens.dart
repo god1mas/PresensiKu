@@ -261,10 +261,12 @@ class _SubjectDetailScreenState extends ConsumerState<SubjectDetailScreen> {
                       children: [
                         Expanded(
                           child: _ActionTile(
-                            label: 'Absensi',
+                            label: 'Presensi',
                             icon: Icons.check,
                             color: AppColors.iceBlue,
-                            onTap: () => context.push('/absensi'),
+                            onTap: () => context.push(
+                              '/absensi?kelas=${widget.classId}&mapel=${widget.subjectId}',
+                            ),
                           ),
                         ),
                         const SizedBox(width: 12),

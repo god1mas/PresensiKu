@@ -78,8 +78,13 @@ void main() {
     );
     await tester.pumpAndSettle();
     expect(find.text('Detail Kelas'), findsOneWidget);
-    expect(find.text('0 siswa'), findsOneWidget);
+    expect(find.text('0 siswa aktif'), findsOneWidget);
+    expect(find.text('Mata pelajaran'), findsOneWidget);
+    expect(find.text('Daftar siswa'), findsNothing);
 
+    await tester.tap(find.text('Kelola siswa'));
+    await tester.pumpAndSettle();
+    expect(find.text('Daftar siswa'), findsWidgets);
     await tester.tap(find.text('+ Tambah siswa'));
     await tester.pumpAndSettle();
     await tester.enterText(find.byType(TextFormField).at(0), 'Ahmad Fauzi');
@@ -91,9 +96,26 @@ void main() {
     await tester.pumpAndSettle();
     expect(find.text('Ahmad Fauzi'), findsOneWidget);
     expect(find.text('1 siswa'), findsOneWidget);
-
-    await tester.drag(find.byType(ListView).last, const Offset(0, -450));
+    await tester.enterText(find.byType(TextField).last, 'Tidak ada');
     await tester.pumpAndSettle();
+    expect(find.text('Siswa tidak ditemukan'), findsOneWidget);
+    await tester.enterText(find.byType(TextField).last, 'Ahmad');
+    await tester.pumpAndSettle();
+    expect(find.text('Ahmad Fauzi'), findsOneWidget);
+    await tester.tap(find.byTooltip('Ubah Ahmad Fauzi'));
+    await tester.pumpAndSettle();
+    await tester.enterText(
+      find.byType(TextFormField).first,
+      'Ahmad Fauzi Baru',
+    );
+    await tester.tap(find.text('Simpan'));
+    await tester.pumpAndSettle();
+    expect(find.text('Ahmad Fauzi Baru'), findsOneWidget);
+    await tester.pageBack();
+    await tester.pumpAndSettle();
+    expect(find.text('1 siswa aktif'), findsOneWidget);
+    expect(find.text('Ahmad Fauzi Baru'), findsNothing);
+
     await tester.tap(find.text('Atur'));
     await tester.pumpAndSettle();
     await tester.tap(find.text('Kelola mata pelajaran'));
@@ -123,6 +145,20 @@ void main() {
     );
     await tester.pumpAndSettle();
     expect(find.text('Matematika'), findsOneWidget);
+    expect(find.byType(InputChip), findsNothing);
+    await tester.tap(find.text('Matematika'));
+    await tester.pumpAndSettle();
+    expect(find.text('Detail Mata Pelajaran'), findsOneWidget);
+    await tester.tap(find.byTooltip('Kembali'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Atur'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.byTooltip('Lepas Matematika dari kelas'));
+    await tester.pumpAndSettle();
+    expect(
+      find.text('Belum ada mata pelajaran untuk kelas ini.'),
+      findsOneWidget,
+    );
 
     await tester.tap(find.byIcon(Icons.more_vert));
     await tester.pumpAndSettle();

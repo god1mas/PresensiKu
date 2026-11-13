@@ -8,7 +8,9 @@ import '../data/class_repository.dart';
 import 'roster_screens.dart';
 
 class ClassListScreen extends ConsumerStatefulWidget {
-  const ClassListScreen({super.key});
+  const ClassListScreen({super.key, this.selectionMode = false});
+
+  final bool selectionMode;
 
   @override
   ConsumerState<ClassListScreen> createState() => _ClassListScreenState();
@@ -134,11 +136,13 @@ class _ClassListScreenState extends ConsumerState<ClassListScreen> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-              'Ruang Kelasmu',
+              widget.selectionMode ? 'Pilih Kelas' : 'Ruang Kelasmu',
               style: Theme.of(context).textTheme.headlineMedium,
             ),
             Text(
-              'Semua kelas di satu tempat.',
+              widget.selectionMode
+                  ? 'Pilih kelas untuk membuka mata pelajaran.'
+                  : 'Semua kelas di satu tempat.',
               style: Theme.of(context).textTheme.bodySmall,
             ),
           ],
@@ -491,33 +495,57 @@ class _ClassDetailScreenState extends ConsumerState<ClassDetailScreen> {
                     snapshot.data!.name,
                     style: Theme.of(context).textTheme.headlineMedium,
                   ),
-                  const SizedBox(height: AppSpace.sm),
+                  const SizedBox(height: AppSpace.xs),
+                  Text(
+                    'Pilih mata pelajaran untuk membuka area kerja kelas.',
+                    style: Theme.of(context).textTheme.bodyMedium,
+                  ),
+                  const SizedBox(height: AppSpace.lg),
+                  ClassSubjectPanel(classId: widget.id),
+                  const SizedBox(height: AppSpace.lg),
                   Container(
                     padding: const EdgeInsets.all(AppSpace.lg),
                     decoration: BoxDecoration(
                       color: AppColors.lavender,
                       borderRadius: BorderRadius.circular(AppRadius.featured),
                     ),
-                    child: Row(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Text(
-                          '${snapshot.data!.studentCount}',
-                          style: Theme.of(context).textTheme.displaySmall,
+                        Row(
+                          children: [
+                            const Icon(
+                              Icons.people_outline,
+                              color: AppColors.blue,
+                            ),
+                            const SizedBox(width: AppSpace.sm),
+                            Text(
+                              'Siswa',
+                              style: Theme.of(context).textTheme.titleLarge,
+                            ),
+                          ],
                         ),
-                        const SizedBox(width: AppSpace.base),
-                        const Text('siswa aktif'),
-                        const Spacer(),
-                        const Icon(Icons.people_outline, color: AppColors.blue),
+                        const SizedBox(height: AppSpace.md),
+                        Text(
+                          '${snapshot.data!.studentCount} siswa aktif',
+                          style: Theme.of(context).textTheme.headlineSmall,
+                        ),
+                        const SizedBox(height: AppSpace.xs),
+                        const Text(
+                          'Lihat, cari, dan ubah data siswa kelas ini.',
+                        ),
+                        const SizedBox(height: AppSpace.base),
+                        FilledButton.icon(
+                          onPressed: () async {
+                            await context.push('/kelas/${widget.id}/siswa');
+                            if (mounted) setState(() => revision++);
+                          },
+                          icon: const Icon(Icons.arrow_forward),
+                          label: const Text('Kelola siswa'),
+                        ),
                       ],
                     ),
                   ),
-                  const SizedBox(height: AppSpace.lg),
-                  StudentListPanel(
-                    classId: widget.id,
-                    onChanged: () => setState(() => revision++),
-                  ),
-                  const SizedBox(height: AppSpace.lg),
-                  ClassSubjectPanel(classId: widget.id),
                 ],
               ),
       ),

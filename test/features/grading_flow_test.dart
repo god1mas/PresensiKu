@@ -70,9 +70,9 @@ void main() {
         .go('/kelas/1/mapel/1');
     await _settle(tester);
     expect(find.text('Detail Mata Pelajaran'), findsOneWidget);
-    expect(find.text('Absensi'), findsOneWidget);
+    expect(find.text('Presensi'), findsOneWidget);
     expect(find.text('Penilaian'), findsOneWidget);
-    await tester.tap(find.text('Buka Penilaian'));
+    await tester.tap(find.text('Penilaian'));
     await _settle(tester);
     expect(find.text('Belum ada penilaian'), findsOneWidget);
     await tester.tap(find.text('+ Tambah Penilaian'));

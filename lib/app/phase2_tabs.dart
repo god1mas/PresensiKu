@@ -350,6 +350,27 @@ class SettingsTab extends ConsumerWidget {
                       'Data disimpan di HP ini. Cadangkan secara berkala, ya!',
                     ),
                   ),
+                  const SizedBox(height: AppSpace.lg),
+                  const Center(
+                    child: Column(
+                      children: [
+                        Text(
+                          'KelasKu',
+                          style: TextStyle(
+                            color: AppColors.navy,
+                            fontWeight: FontWeight.w700,
+                          ),
+                        ),
+                        Text(
+                          'by god1mas',
+                          style: TextStyle(
+                            color: AppColors.muted,
+                            fontSize: 11,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
                 ],
               ),
       ),

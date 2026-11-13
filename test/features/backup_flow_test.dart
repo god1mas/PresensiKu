@@ -42,6 +42,7 @@ void main() {
     Uint8List? saved;
     final delivery = BackupDelivery(
       saveBackup: (filename, bytes) async {
+        expect(filename, startsWith('KelasKu_'));
         expect(filename, endsWith('.pkbackup'));
         saved = bytes;
         return true;

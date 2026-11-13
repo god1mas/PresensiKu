@@ -27,7 +27,14 @@ final appRouterProvider = Provider<GoRouter>((ref) {
       ),
       GoRoute(
         path: '/absensi',
-        builder: (context, state) => const AttendanceSetupScreen(),
+        builder: (context, state) => AttendanceSetupScreen(
+          initialClassId: int.tryParse(
+            state.uri.queryParameters['kelas'] ?? '',
+          ),
+          initialSubjectId: int.tryParse(
+            state.uri.queryParameters['mapel'] ?? '',
+          ),
+        ),
       ),
       GoRoute(
         path: '/absensi/sukses/:id',
@@ -70,7 +77,9 @@ final appRouterProvider = Provider<GoRouter>((ref) {
           ),
           GoRoute(
             path: '/kelas',
-            builder: (context, state) => const ClassListScreen(),
+            builder: (context, state) => ClassListScreen(
+              selectionMode: state.uri.queryParameters['pilih'] == '1',
+            ),
             routes: [
               GoRoute(
                 path: ':id',
@@ -78,6 +87,12 @@ final appRouterProvider = Provider<GoRouter>((ref) {
                   id: int.parse(state.pathParameters['id']!),
                 ),
                 routes: [
+                  GoRoute(
+                    path: 'siswa',
+                    builder: (context, state) => StudentManagementScreen(
+                      classId: int.parse(state.pathParameters['id']!),
+                    ),
+                  ),
                   GoRoute(
                     path: 'mapel/:subjectId',
                     builder: (context, state) => SubjectDetailScreen(
@@ -245,7 +260,7 @@ class PresensiKuApp extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     return MaterialApp.router(
-      title: 'PresensiKu',
+      title: 'KelasKu',
       debugShowCheckedModeBanner: false,
       theme: AppTheme.light,
       routerConfig: ref.watch(appRouterProvider),

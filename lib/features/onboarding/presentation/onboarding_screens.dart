@@ -58,17 +58,19 @@ class _SplashScreenState extends ConsumerState<SplashScreen> {
                 ),
                 child: SvgPicture.asset(
                   'assets/brand/presensiku_emblem.svg',
-                  semanticsLabel: 'Logo PresensiKu',
+                  semanticsLabel: 'Logo KelasKu',
                 ),
               ),
               const SizedBox(height: 36),
+              Text('KelasKu', style: Theme.of(context).textTheme.displaySmall),
               Text(
-                'PresensiKu',
-                style: Theme.of(context).textTheme.displaySmall,
+                'by god1mas',
+                style: Theme.of(context).textTheme.bodySmall
+                    ?.copyWith(color: AppColors.muted),
               ),
-              const SizedBox(height: 2),
+              const SizedBox(height: AppSpace.sm),
               Text(
-                'Absensi mudah. Hari lebih cerah.',
+                'Kelola kelas, presensi, dan penilaian dalam satu tempat.',
                 style: Theme.of(context).textTheme.bodyMedium,
                 textAlign: TextAlign.center,
               ),
@@ -279,7 +281,7 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
                           color: Colors.white,
                         ),
                       )
-                    : const Text('Mulai pakai PresensiKu  ↗'),
+                    : const Text('Mulai pakai KelasKu  ↗'),
               ),
               const SizedBox(height: AppSpace.base),
               Text(

@@ -10,7 +10,15 @@ import '../../dashboard/data/dashboard_repository.dart';
 import '../data/attendance_repository.dart';
 
 class AttendanceSetupScreen extends ConsumerStatefulWidget {
-  const AttendanceSetupScreen({super.key});
+  const AttendanceSetupScreen({
+    super.key,
+    this.initialClassId,
+    this.initialSubjectId,
+  });
+
+  final int? initialClassId;
+  final int? initialSubjectId;
+
   @override
   ConsumerState<AttendanceSetupScreen> createState() =>
       _AttendanceSetupScreenState();
@@ -22,6 +30,13 @@ class _AttendanceSetupScreenState extends ConsumerState<AttendanceSetupScreen> {
   DateTime date = DateTime.now();
   int meeting = 1;
   bool busy = false;
+
+  @override
+  void initState() {
+    super.initState();
+    classId = widget.initialClassId;
+    subjectId = widget.initialSubjectId;
+  }
 
   Future<void> continueAttendance() async {
     if (classId == null || subjectId == null) {
@@ -88,6 +103,18 @@ class _AttendanceSetupScreenState extends ConsumerState<AttendanceSetupScreen> {
                   child: Text('Tambahkan kelas sebelum memulai absensi.'),
                 );
               }
+              final selectedClassId =
+                  available.any((item) => item.id == classId) ? classId : null;
+              if (classId != null && selectedClassId == null) {
+                WidgetsBinding.instance.addPostFrameCallback((_) {
+                  if (mounted && classId != null) {
+                    setState(() {
+                      classId = null;
+                      subjectId = null;
+                    });
+                  }
+                });
+              }
               return ListView(
                 padding: const EdgeInsets.all(AppSpace.lg),
                 children: [
@@ -114,8 +141,8 @@ class _AttendanceSetupScreenState extends ConsumerState<AttendanceSetupScreen> {
                   ),
                   const SizedBox(height: AppSpace.xl),
                   DropdownButtonFormField<int>(
-                    key: ValueKey(classId),
-                    initialValue: classId,
+                    key: ValueKey(selectedClassId),
+                    initialValue: selectedClassId,
                     decoration: const InputDecoration(labelText: 'Pilih kelas'),
                     items: available
                         .map(
@@ -133,9 +160,9 @@ class _AttendanceSetupScreenState extends ConsumerState<AttendanceSetupScreen> {
                     }),
                   ),
                   const SizedBox(height: AppSpace.lg),
-                  if (classId != null)
+                  if (selectedClassId != null)
                     FutureBuilder<List<Subject>>(
-                      future: roster.subjectsForClass(classId!),
+                      future: roster.subjectsForClass(selectedClassId),
                       builder: (context, snapshot) {
                         final subjects = snapshot.data ?? [];
                         if (snapshot.hasData && subjects.isEmpty) {
@@ -144,8 +171,11 @@ class _AttendanceSetupScreenState extends ConsumerState<AttendanceSetupScreen> {
                           );
                         }
                         return DropdownButtonFormField<int>(
-                          key: ValueKey('$classId:$subjectId'),
-                          initialValue: subjectId,
+                          key: ValueKey('$selectedClassId:$subjectId'),
+                          initialValue:
+                              subjects.any((item) => item.id == subjectId)
+                              ? subjectId
+                              : null,
                           decoration: const InputDecoration(
                             labelText: 'Mata pelajaran',
                           ),

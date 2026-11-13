@@ -6,6 +6,21 @@ import '../../../core/design/tokens.dart';
 import '../../dashboard/data/dashboard_repository.dart';
 import '../data/roster_repository.dart';
 
+class StudentManagementScreen extends StatelessWidget {
+  const StudentManagementScreen({super.key, required this.classId});
+
+  final int classId;
+
+  @override
+  Widget build(BuildContext context) => Scaffold(
+    appBar: AppBar(title: const Text('Daftar siswa')),
+    body: ListView(
+      padding: const EdgeInsets.all(AppSpace.lg),
+      children: [StudentListPanel(classId: classId)],
+    ),
+  );
+}
+
 class StudentListPanel extends ConsumerStatefulWidget {
   const StudentListPanel({super.key, required this.classId, this.onChanged});
   final int classId;
@@ -241,9 +256,36 @@ class _ClassSubjectPanelState extends ConsumerState<ClassSubjectPanel> {
         child: ListView(
           shrinkWrap: true,
           children: [
-            const ListTile(title: Text('Pilih mata pelajaran')),
+            const ListTile(title: Text('Atur mata pelajaran kelas')),
+            for (final subject in linked)
+              ListTile(
+                leading: const Icon(Icons.book_outlined, color: AppColors.blue),
+                title: Text(subject.name),
+                subtitle: const Text('Terhubung ke kelas'),
+                trailing: IconButton(
+                  tooltip: 'Lepas ${subject.name} dari kelas',
+                  icon: const Icon(Icons.remove_circle_outline),
+                  onPressed: () async {
+                    try {
+                      await repository.unassignSubject(
+                        classId: widget.classId,
+                        subjectId: subject.id,
+                      );
+                      if (sheetContext.mounted) Navigator.pop(sheetContext);
+                      if (mounted) setState(() => revision++);
+                    } catch (error) {
+                      if (sheetContext.mounted) {
+                        ScaffoldMessenger.of(sheetContext).showSnackBar(
+                          SnackBar(content: Text(_message(error))),
+                        );
+                      }
+                    }
+                  },
+                ),
+              ),
             for (final subject in all.where((s) => !linkedIds.contains(s.id)))
               ListTile(
+                leading: const Icon(Icons.add_circle_outline),
                 title: Text(subject.name),
                 onTap: () async {
                   try {
@@ -286,45 +328,80 @@ class _ClassSubjectPanelState extends ConsumerState<ClassSubjectPanel> {
         .subjectsForClass(widget.classId),
     builder: (context, snapshot) {
       final subjects = snapshot.data ?? [];
-      return Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              Expanded(
-                child: Text(
-                  'Mata pelajaran',
-                  style: Theme.of(context).textTheme.titleLarge,
-                ),
-              ),
-              TextButton(onPressed: assign, child: const Text('Atur')),
-            ],
-          ),
-          if (subjects.isEmpty)
-            const Text('Belum ada mata pelajaran untuk kelas ini.')
-          else
-            Wrap(
-              spacing: 8,
+      return Container(
+        padding: const EdgeInsets.all(AppSpace.base),
+        decoration: BoxDecoration(
+          color: AppColors.lightBlue,
+          borderRadius: BorderRadius.circular(AppRadius.featured),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
               children: [
-                for (final subject in subjects)
-                  InputChip(
-                    label: Text(subject.name),
-                    onPressed: () => context.push(
-                      '/kelas/${widget.classId}/mapel/${subject.id}',
-                    ),
-                    onDeleted: () async {
-                      await ref
-                          .read(rosterRepositoryProvider)
-                          .unassignSubject(
-                            classId: widget.classId,
-                            subjectId: subject.id,
-                          );
-                      if (mounted) setState(() => revision++);
-                    },
+                const Icon(Icons.menu_book_outlined, color: AppColors.blue),
+                const SizedBox(width: AppSpace.sm),
+                Expanded(
+                  child: Text(
+                    'Mata pelajaran',
+                    style: Theme.of(context).textTheme.titleLarge,
                   ),
+                ),
+                TextButton(onPressed: assign, child: const Text('Atur')),
               ],
             ),
-        ],
+            const SizedBox(height: AppSpace.xs),
+            Text(
+              subjects.isEmpty
+                  ? 'Tambahkan mata pelajaran untuk mulai mengelola kelas.'
+                  : '${subjects.length} mata pelajaran di kelas ini',
+              style: const TextStyle(color: AppColors.muted),
+            ),
+            const SizedBox(height: AppSpace.md),
+            if (snapshot.hasError)
+              const Text('Mata pelajaran belum dapat dimuat.')
+            else if (!snapshot.hasData)
+              const Center(child: CircularProgressIndicator())
+            else if (subjects.isEmpty)
+              const Text('Belum ada mata pelajaran untuk kelas ini.')
+            else
+              for (final subject in subjects) ...[
+                Material(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(AppRadius.card),
+                  child: InkWell(
+                    borderRadius: BorderRadius.circular(AppRadius.card),
+                    onTap: () => context.push(
+                      '/kelas/${widget.classId}/mapel/${subject.id}',
+                    ),
+                    child: Padding(
+                      padding: const EdgeInsets.all(AppSpace.base),
+                      child: Row(
+                        children: [
+                          const Icon(
+                            Icons.book_outlined,
+                            color: AppColors.blue,
+                          ),
+                          const SizedBox(width: AppSpace.md),
+                          Expanded(
+                            child: Text(
+                              subject.name,
+                              style: Theme.of(context).textTheme.titleMedium,
+                            ),
+                          ),
+                          const Icon(
+                            Icons.chevron_right,
+                            color: AppColors.blue,
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
+                const SizedBox(height: AppSpace.sm),
+              ],
+          ],
+        ),
       );
     },
   );

@@ -26,6 +26,8 @@ void main() {
     );
 
     await tester.pumpWidget(app());
+    expect(find.text('KelasKu'), findsOneWidget);
+    expect(find.text('by god1mas'), findsOneWidget);
     await tester.pump(const Duration(milliseconds: 900));
     await tester.runAsync(
       () => Future<void>.delayed(const Duration(milliseconds: 100)),
@@ -34,12 +36,13 @@ void main() {
     expect(find.text('Kenalan dulu, yuk!'), findsOneWidget);
 
     await tester.enterText(find.byType(TextFormField).first, 'Budi Santoso');
-    await tester.tap(find.textContaining('Mulai pakai PresensiKu'));
+    await tester.tap(find.textContaining('Mulai pakai KelasKu'));
     await tester.runAsync(
       () => Future<void>.delayed(const Duration(milliseconds: 100)),
     );
     await tester.pumpAndSettle();
     expect(find.text('Halo, Budi Santoso!'), findsOneWidget);
+    expect(find.text('Mulai Kelas'), findsOneWidget);
 
     await tester.pumpWidget(const SizedBox.shrink());
     await tester.pumpWidget(app());

@@ -54,24 +54,33 @@ class DashboardScreen extends ConsumerWidget {
                   height: 52,
                 ),
                 const SizedBox(width: 3),
-                const Text.rich(
-                  TextSpan(
-                    style: TextStyle(
-                      fontFamily: 'Nunito',
-                      fontWeight: FontWeight.w800,
-                      fontSize: 19,
+                const Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text.rich(
+                      TextSpan(
+                        style: TextStyle(
+                          fontFamily: 'Nunito',
+                          fontWeight: FontWeight.w800,
+                          fontSize: 19,
+                        ),
+                        children: [
+                          TextSpan(
+                            text: 'Kelas',
+                            style: TextStyle(color: AppColors.navy),
+                          ),
+                          TextSpan(
+                            text: 'Ku',
+                            style: TextStyle(color: AppColors.blue),
+                          ),
+                        ],
+                      ),
                     ),
-                    children: [
-                      TextSpan(
-                        text: 'Presensi',
-                        style: TextStyle(color: AppColors.navy),
-                      ),
-                      TextSpan(
-                        text: 'Ku',
-                        style: TextStyle(color: AppColors.blue),
-                      ),
-                    ],
-                  ),
+                    Text(
+                      'by god1mas',
+                      style: TextStyle(fontSize: 10, color: AppColors.muted),
+                    ),
+                  ],
                 ),
               ],
             ),
@@ -103,7 +112,7 @@ class DashboardScreen extends ConsumerWidget {
                 children: [
                   Expanded(
                     child: Text(
-                      'Yuk, kelola absensi kelasmu\ndengan lebih praktis!',
+                      'Kelola kelasmu, catat presensi,\ndan nilai siswa di satu tempat.',
                       style: Theme.of(context).textTheme.bodyLarge
                           ?.copyWith(fontSize: 13),
                     ),
@@ -124,25 +133,14 @@ class DashboardScreen extends ConsumerWidget {
                 minimumSize: const Size.fromHeight(59),
                 alignment: Alignment.centerLeft,
               ),
-              onPressed: () {
-                if (data.classCount == 0) {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(
-                      content: Text('Tambahkan kelas sebelum memulai absensi.'),
-                    ),
-                  );
-                  context.go('/kelas');
-                } else {
-                  context.go('/absensi');
-                }
-              },
+              onPressed: () => context.go('/kelas?pilih=1'),
               child: const Row(
                 children: [
                   Icon(Icons.calendar_month_outlined, size: 27),
                   SizedBox(width: AppSpace.md),
                   Expanded(
                     child: Text(
-                      'Mulai Absensi',
+                      'Mulai Kelas',
                       style: TextStyle(
                         fontFamily: 'Nunito',
                         fontSize: 21,
@@ -176,7 +174,7 @@ class DashboardScreen extends ConsumerWidget {
           ),
           if (data.classes.isEmpty)
             const _EmptyCard(
-              'Belum ada kelas. Tambahkan kelas untuk mulai mencatat kehadiran.',
+              'Belum ada kelas. Tambahkan kelas untuk mulai mengelola presensi dan penilaian.',
             )
           else
             SizedBox(

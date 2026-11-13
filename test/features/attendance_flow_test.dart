@@ -58,24 +58,23 @@ void main() {
       () => Future<void>.delayed(const Duration(milliseconds: 100)),
     );
     await tester.pumpAndSettle();
-    await tester.tap(find.text('Mulai Absensi'));
+    await tester.tap(find.text('Mulai Kelas'));
     await tester.runAsync(
       () => Future<void>.delayed(const Duration(milliseconds: 100)),
     );
+    await tester.pumpAndSettle();
+    expect(find.text('Pilih Kelas'), findsOneWidget);
+    await tester.tap(find.text('VII A').first);
+    await tester.pumpAndSettle();
+    expect(find.text('Detail Kelas'), findsOneWidget);
+    await tester.tap(find.text('Matematika'));
+    await tester.pumpAndSettle();
+    expect(find.text('Detail Mata Pelajaran'), findsOneWidget);
+    await tester.tap(find.text('Presensi'));
     await tester.pumpAndSettle();
     expect(find.text('Mulai absensi'), findsOneWidget);
-
-    await tester.tap(find.byType(DropdownButtonFormField<int>).first);
-    await tester.pumpAndSettle();
-    await tester.tap(find.textContaining('VII A').last);
-    await tester.runAsync(
-      () => Future<void>.delayed(const Duration(milliseconds: 100)),
-    );
-    await tester.pumpAndSettle();
-    await tester.tap(find.byType(DropdownButtonFormField<int>).last);
-    await tester.pumpAndSettle();
-    await tester.tap(find.text('Matematika').last);
-    await tester.pumpAndSettle();
+    expect(find.textContaining('VII A'), findsWidgets);
+    expect(find.text('Matematika'), findsOneWidget);
     await tester.tap(find.textContaining('Lanjutkan absensi'));
     await tester.runAsync(
       () => Future<void>.delayed(const Duration(milliseconds: 100)),
