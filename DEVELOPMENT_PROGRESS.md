@@ -1,5 +1,12 @@
 ﻿# Development Progress
 
+## V4 PHASE 2 — Database Model and Safe Migration
+
+- Status: PASS (2026-11-14) on required migration and regression tests.
+- Implementation: schema version 2 adds six grading tables, five default categories, stable category IDs, grade-state constraints, historical snapshots, archive/soft-delete fields, foreign keys, scoped weight uniqueness, and indexes. V1 tables and records are unchanged. `onUpgrade` performs only additive DDL.
+- Verification: fresh V2 creation, populated V1→V2 upgrade, attendance preservation, foreign-key integrity, reopen, and failed-upgrade rollback passed. Full Flutter suite passed 26/26. Static analysis was started and is still running at this checkpoint.
+- Next: V4 Phase 3 pure Dart calculation engine and tests.
+
 ## V4 PHASE 1 — Repository Audit and Implementation Baseline
 
 - Status: PASS (2026-11-13).
