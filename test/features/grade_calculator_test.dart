@@ -49,6 +49,18 @@ void main() {
     expect(result.incompleteReasons, contains(contains('EX')));
   });
 
+  test('category averages remain visible before weights are configured', () {
+    final result = calculator.calculate(
+      assessments: const [AssessmentValue(id: 1, categoryId: 1, maxScore: 20)],
+      grades: const {1: GradeValue.graded(10)},
+      weights: const {},
+    );
+    expect(result.categoryAverages[1], 50);
+    expect(result.finalGrade, isNull);
+    expect(result.provisional, isNull);
+    expect(result.incompleteReasons, contains(contains('Bobot')));
+  });
+
   test('partial categories yield provisional, never official final', () {
     final result = calculator.calculate(
       assessments: const [

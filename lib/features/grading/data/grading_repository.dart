@@ -408,7 +408,6 @@ class GradingRepository {
       subjectId: subjectId,
       periodId: periodId,
     );
-    if (configuredWeights.isEmpty) return null;
     final items = await assessments(
       classId: classId,
       subjectId: subjectId,

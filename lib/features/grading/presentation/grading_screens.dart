@@ -1,3 +1,5 @@
+import 'dart:typed_data';
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -5,6 +7,9 @@ import 'package:go_router/go_router.dart';
 
 import '../../../core/database/app_database.dart';
 import '../../../core/design/tokens.dart';
+import '../../reports/data/report_delivery.dart';
+import '../data/grade_report_repository.dart';
+import '../data/grade_xlsx_exporter.dart';
 import '../data/grading_repository.dart';
 import '../domain/grade_calculator.dart';
 
@@ -2229,7 +2234,7 @@ class StudentGradeScreen extends ConsumerWidget {
       );
 }
 
-class GradeExportScreen extends ConsumerWidget {
+class GradeExportScreen extends ConsumerStatefulWidget {
   const GradeExportScreen({
     super.key,
     required this.classId,
@@ -2239,81 +2244,189 @@ class GradeExportScreen extends ConsumerWidget {
   final int subjectId;
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) =>
-      FutureBuilder<_ScopeInfo>(
-        future: _scope(ref, classId, subjectId),
-        builder: (context, snapshot) {
-          if (!snapshot.hasData) {
-            return const Scaffold(
-              body: Center(child: CircularProgressIndicator()),
-            );
-          }
-          final scope = snapshot.data!;
-          return _GradeScaffold(
-            title: 'Ekspor Nilai Excel',
-            subtitle: '${scope.subjectName} · ${scope.className}',
-            action: const FilledButton(
-              onPressed: null,
-              child: Text('Ekspor Nilai (.xlsx)'),
+  ConsumerState<GradeExportScreen> createState() => _GradeExportScreenState();
+}
+
+class _GradeExportScreenState extends ConsumerState<GradeExportScreen> {
+  late final Future<_ScopeInfo> scopeFuture;
+  bool busy = false;
+  Uint8List? lastWorkbook;
+  String? lastFilename;
+
+  @override
+  void initState() {
+    super.initState();
+    scopeFuture = _scope(ref, widget.classId, widget.subjectId);
+  }
+
+  String _filename(_ScopeInfo scope) {
+    String clean(String value) =>
+        value.replaceAll(RegExp(r'[^A-Za-z0-9_-]'), '_');
+    return 'rekap_${clean(scope.className)}_${clean(scope.subjectName)}_'
+        '${clean(scope.periodName)}.xlsx';
+  }
+
+  Future<void> _export(_ScopeInfo scope, {bool share = false}) async {
+    setState(() => busy = true);
+    try {
+      final report = await ref
+          .read(gradeReportRepositoryProvider)
+          .load(
+            classId: widget.classId,
+            subjectId: widget.subjectId,
+            periodId: scope.periodId,
+          );
+      final bytes = const GradeXlsxExporter().build(report);
+      final filename = _filename(scope);
+      final delivered = share
+          ? await ref.read(reportDeliveryProvider).share(filename, bytes)
+          : await ref.read(reportDeliveryProvider).save(filename, bytes);
+      if (!mounted) return;
+      lastWorkbook = bytes;
+      lastFilename = filename;
+      if (delivered) {
+        await showDialog<void>(
+          context: context,
+          builder: (dialogContext) => AlertDialog(
+            title: const Text('Ekspor Berhasil'),
+            content: Text(
+              'Berhasil dibuat: $filename\n'
+              '3 sheet · Detail, Kategori, Nilai Akhir',
             ),
-            children: [
-              const _GradeCard(
-                color: AppColors.lightGreen,
-                child: Text(
-                  'XLSX\nLaporan Penilaian',
-                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.w700),
+            actions: [
+              if (!share)
+                TextButton(
+                  onPressed: () async {
+                    Navigator.pop(dialogContext);
+                    await _shareLast();
+                  },
+                  child: const Text('Bagikan'),
                 ),
-              ),
-              _GradeCard(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    const Text(
-                      'Pilih data yang diekspor',
-                      style: TextStyle(fontWeight: FontWeight.w700),
-                    ),
-                    ListTile(
-                      contentPadding: EdgeInsets.zero,
-                      title: const Text('Kelas'),
-                      trailing: Text(scope.className),
-                    ),
-                    ListTile(
-                      contentPadding: EdgeInsets.zero,
-                      title: const Text('Mata Pelajaran'),
-                      trailing: Text(scope.subjectName),
-                    ),
-                    ListTile(
-                      contentPadding: EdgeInsets.zero,
-                      title: const Text('Periode'),
-                      trailing: Text(scope.periodName),
-                    ),
-                  ],
-                ),
-              ),
-              const _GradeCard(
-                color: AppColors.iceBlue,
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      'Isi file Excel',
-                      style: TextStyle(fontWeight: FontWeight.w700),
-                    ),
-                    ListTile(title: Text('01  Detail Penilaian')),
-                    ListTile(title: Text('02  Rekap per Kategori')),
-                    ListTile(title: Text('03  Nilai Akhir')),
-                  ],
-                ),
-              ),
-              const _GradeCard(
-                color: AppColors.yellow,
-                child: Text(
-                  'Format khusus nilai: kosong = belum dinilai · '
-                  '0 = nilai nol · EX = dikecualikan',
-                ),
+              FilledButton(
+                onPressed: () => Navigator.pop(dialogContext),
+                child: const Text('Selesai'),
               ),
             ],
-          );
-        },
+          ),
+        );
+      }
+    } catch (_) {
+      if (!mounted) return;
+      await showDialog<void>(
+        context: context,
+        builder: (dialogContext) => AlertDialog(
+          title: const Text('Ekspor Gagal'),
+          content: const Text(
+            'Gagal membuat laporan. Coba pilih lokasi '
+            'penyimpanan lain atau periksa izin file pada perangkat.',
+          ),
+          actions: [
+            FilledButton(
+              onPressed: () => Navigator.pop(dialogContext),
+              child: const Text('Coba Lagi'),
+            ),
+          ],
+        ),
       );
+    } finally {
+      if (mounted) setState(() => busy = false);
+    }
+  }
+
+  Future<void> _shareLast() async {
+    if (lastWorkbook == null || lastFilename == null) return;
+    try {
+      await ref
+          .read(reportDeliveryProvider)
+          .share(lastFilename!, lastWorkbook!);
+    } catch (_) {
+      if (mounted) {
+        _showError(
+          context,
+          const FormatException('Berkas belum dapat dibagikan.'),
+        );
+      }
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) => FutureBuilder<_ScopeInfo>(
+    future: scopeFuture,
+    builder: (context, snapshot) {
+      if (!snapshot.hasData) {
+        return const Scaffold(body: Center(child: CircularProgressIndicator()));
+      }
+      final scope = snapshot.data!;
+      return _GradeScaffold(
+        title: 'Ekspor Nilai Excel',
+        subtitle: '${scope.subjectName} · ${scope.className}',
+        action: FilledButton(
+          onPressed: busy ? null : () => _export(scope),
+          child: Text(busy ? 'Membuat laporan…' : 'Ekspor Nilai (.xlsx)'),
+        ),
+        children: [
+          const _GradeCard(
+            color: AppColors.lightGreen,
+            child: Text(
+              'XLSX\nLaporan Penilaian',
+              style: TextStyle(fontSize: 18, fontWeight: FontWeight.w700),
+            ),
+          ),
+          _GradeCard(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Text(
+                  'Pilih data yang diekspor',
+                  style: TextStyle(fontWeight: FontWeight.w700),
+                ),
+                ListTile(
+                  contentPadding: EdgeInsets.zero,
+                  title: const Text('Kelas'),
+                  trailing: Text(scope.className),
+                ),
+                ListTile(
+                  contentPadding: EdgeInsets.zero,
+                  title: const Text('Mata Pelajaran'),
+                  trailing: Text(scope.subjectName),
+                ),
+                ListTile(
+                  contentPadding: EdgeInsets.zero,
+                  title: const Text('Periode'),
+                  trailing: Text(scope.periodName),
+                ),
+              ],
+            ),
+          ),
+          const _GradeCard(
+            color: AppColors.iceBlue,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Isi file Excel',
+                  style: TextStyle(fontWeight: FontWeight.w700),
+                ),
+                ListTile(title: Text('01  Detail Penilaian')),
+                ListTile(title: Text('02  Rekap per Kategori')),
+                ListTile(title: Text('03  Nilai Akhir')),
+              ],
+            ),
+          ),
+          const _GradeCard(
+            color: AppColors.yellow,
+            child: Text(
+              'Format khusus nilai: kosong = belum dinilai · '
+              '0 = nilai nol · EX = dikecualikan',
+            ),
+          ),
+          OutlinedButton.icon(
+            onPressed: busy ? null : () => _export(scope, share: true),
+            icon: const Icon(Icons.share_outlined),
+            label: const Text('Bagikan Excel'),
+          ),
+        ],
+      );
+    },
+  );
 }

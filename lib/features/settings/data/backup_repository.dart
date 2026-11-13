@@ -15,7 +15,7 @@ class BackupPreview {
   const BackupPreview(this.data);
   final Map<String, List<Map<String, Object?>>> data;
 
-  int count(String table) => data[table]!.length;
+  int count(String table) => data[table]?.length ?? 0;
   String get teacherName => data['teacher_profile']!.single['name'] as String;
 }
 
@@ -24,7 +24,7 @@ class BackupRepository {
   final Database database;
 
   static const format = 'PresensiKu SQLite backup';
-  static const tables = <String>[
+  static const legacyTables = <String>[
     'teacher_profile',
     'academic_period',
     'school_class',
@@ -33,6 +33,15 @@ class BackupRepository {
     'class_subject',
     'attendance_session',
     'attendance_record',
+  ];
+  static const tables = <String>[
+    ...legacyTables,
+    'assessment_category',
+    'assessment',
+    'assessment_grade',
+    'grading_weight_set',
+    'grading_weight_item',
+    'grading_audit_log',
   ];
 
   Future<Uint8List> create() async {
@@ -63,13 +72,15 @@ class BackupRepository {
       if (decoded is! Map<String, dynamic> || decoded['format'] != format) {
         throw const FormatException('Format file cadangan tidak dikenal.');
       }
-      if (decoded['schemaVersion'] != AppDatabase.schemaVersion) {
+      final version = decoded['schemaVersion'];
+      if (version != 1 && version != AppDatabase.schemaVersion) {
         throw const FormatException('Versi database cadangan tidak cocok.');
       }
+      final expectedTables = version == 1 ? legacyTables : tables;
       final raw = decoded['data'];
       if (raw is! Map<String, dynamic> ||
-          raw.length != tables.length ||
-          !tables.every(raw.containsKey)) {
+          raw.length != expectedTables.length ||
+          !expectedTables.every(raw.containsKey)) {
         throw const FormatException('Isi file cadangan tidak lengkap.');
       }
       final digest = sha256.convert(utf8.encode(jsonEncode(raw))).toString();
@@ -77,7 +88,7 @@ class BackupRepository {
         throw const FormatException('File cadangan rusak atau berubah.');
       }
       final data = <String, List<Map<String, Object?>>>{};
-      for (final table in tables) {
+      for (final table in expectedTables) {
         final rows = raw[table];
         if (rows is! List) {
           throw const FormatException('Isi file cadangan tidak valid.');
@@ -95,6 +106,9 @@ class BackupRepository {
       if (data['teacher_profile']!.length != 1 ||
           data['teacher_profile']!.single['name'] is! String) {
         throw const FormatException('Profil guru tidak valid.');
+      }
+      for (final table in tables) {
+        data.putIfAbsent(table, () => []);
       }
       return BackupPreview(data);
     } on FormatException {
@@ -121,6 +135,17 @@ class BackupRepository {
             throw const FormatException('Skema file cadangan tidak cocok.');
           }
           await txn.insert(table, row);
+        }
+      }
+      if (backup.data['assessment_category']!.isEmpty) {
+        final now = DateTime.now().toUtc().toIso8601String();
+        for (final name in ['Tugas', 'Ulangan', 'UTS', 'UAS', 'Sikap']) {
+          await txn.insert('assessment_category', {
+            'name': name,
+            'is_default': 1,
+            'created_at': now,
+            'updated_at': now,
+          });
         }
       }
       final invalidRelations = await txn.rawQuery('PRAGMA foreign_key_check');

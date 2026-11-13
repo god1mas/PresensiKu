@@ -58,7 +58,7 @@ class GradeCalculator {
     required Map<int, GradeValue> grades,
     required Map<int, int> weights,
   }) {
-    validateWeights(weights);
+    if (weights.isNotEmpty) validateWeights(weights);
     final normalized = <int, List<double>>{};
     final reasons = <String>[];
     for (final assessment in assessments) {
@@ -90,6 +90,8 @@ class GradeCalculator {
       averages[entry.key] =
           entry.value.reduce((a, b) => a + b) / entry.value.length;
     }
+
+    if (weights.isEmpty) reasons.add('Bobot belum diatur.');
 
     var weightedSum = 0.0;
     var availableWeight = 0;

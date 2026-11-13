@@ -1,5 +1,12 @@
 ﻿# Development Progress
 
+## V4 PHASE 6 — Statistics, Excel, and Backup Integration
+
+- Status: PASS (2026-11-14) on focused export and restore verification.
+- Implementation: grading report loader keeps final and provisional values separate and includes archived student references. Three-sheet XLSX export (`Detail Penilaian`, `Rekap per Kategori`, `Nilai Akhir`) includes class/subject/year/semester/weights; blank cells remain empty, zero is numeric, EX is text. Export screen reuses native save/share delivery with success/failure states. Backup V2 includes all 14 tables and checksum; V1 eight-table envelopes restore into V2 with empty grading records and default categories. Restore remains transactional and uses the existing replacement confirmation UI.
+- Verification: 14/14 focused tests passed across calculation, XLSX decoding/cell types, V1/V2 restore, rollback, and save/share wiring. Existing backup repository tests passed 3/3. Category averages remain visible before weights are configured, without inventing an official grade.
+- Next: V4 Phase 7 full regression, 40-student workflow, Android version/release, and device QA checkpoint.
+
 ## V4 PHASE 5 — Figma V4 Grading UI
 
 - Status: PASS for implemented V4 UI/navigation (2026-11-14); workbook delivery remains the explicit Phase 6 task.
