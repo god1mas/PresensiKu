@@ -1,10 +1,17 @@
 ﻿# Development Progress
 
+## V4 PHASE 3 — Grading Domain and Calculation Engine
+
+- Status: PASS (2026-11-14) on required calculation cases.
+- Implementation: pure Dart `GradeCalculator` normalizes by maximum score, averages valid scores equally within each category, applies integer weights, and distinguishes final from provisional. UNGRADED, numeric zero, and EX remain separate. Missing required grades, missing positive-weight categories, and all-EX categories carry explicit incomplete reasons. No internal rounding.
+- Verification: 8/8 focused tests passed for 20/50/100 maxima, zero/blank/EX, required and all-EX cases, 0% and custom categories, weight 99/100/101, correction and weight recalculation, and invalid values.
+- Next: V4 Phase 4 transactional repositories and persistence tests.
+
 ## V4 PHASE 2 — Database Model and Safe Migration
 
 - Status: PASS (2026-11-14) on required migration and regression tests.
 - Implementation: schema version 2 adds six grading tables, five default categories, stable category IDs, grade-state constraints, historical snapshots, archive/soft-delete fields, foreign keys, scoped weight uniqueness, and indexes. V1 tables and records are unchanged. `onUpgrade` performs only additive DDL.
-- Verification: fresh V2 creation, populated V1→V2 upgrade, attendance preservation, foreign-key integrity, reopen, and failed-upgrade rollback passed. Full Flutter suite passed 26/26. Static analysis was started and is still running at this checkpoint.
+- Verification: fresh V2 creation, populated V1→V2 upgrade, attendance preservation, foreign-key integrity, reopen, and failed-upgrade rollback passed. Full Flutter suite passed 26/26. Static analysis found no issues.
 - Next: V4 Phase 3 pure Dart calculation engine and tests.
 
 ## V4 PHASE 1 — Repository Audit and Implementation Baseline
