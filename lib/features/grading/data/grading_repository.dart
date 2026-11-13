@@ -29,8 +29,9 @@ class GradingRepository {
 
   Future<int> createCategory(String name) async {
     final clean = name.trim();
-    if (clean.isEmpty)
+    if (clean.isEmpty) {
       throw const FormatException('Nama kategori wajib diisi.');
+    }
     final now = _now;
     return database.insert('assessment_category', {
       'name': clean,
@@ -41,8 +42,9 @@ class GradingRepository {
 
   Future<void> renameCategory(int id, String name) async {
     final clean = name.trim();
-    if (clean.isEmpty)
+    if (clean.isEmpty) {
       throw const FormatException('Nama kategori wajib diisi.');
+    }
     final changed = await database.update(
       'assessment_category',
       {'name': clean, 'updated_at': _now},
@@ -479,8 +481,9 @@ class GradingRepository {
       whereArgs: [classId, subjectId],
       limit: 1,
     );
-    if (linked.isEmpty)
+    if (linked.isEmpty) {
       throw const FormatException('Mapel belum terhubung ke kelas.');
+    }
     return _Scope(
       schoolClass['name'] as String,
       subject['name'] as String,

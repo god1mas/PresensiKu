@@ -1,5 +1,13 @@
 ﻿# Development Progress
 
+## V4 PHASE 5 — Figma V4 Grading UI
+
+- Status: PASS for implemented V4 UI/navigation (2026-11-14); workbook delivery remains the explicit Phase 6 task.
+- Implementation: class subject chips open subject detail with Absensi and Penilaian actions. Added assessment overview and empty state, add/edit form, grade input with blank/0/EX and unsaved-change confirmation, assessment detail with blank/archived rows and archive/delete confirmation, category list/add, scoped weight editor with invalid-total disabled action, recap statistics, student final/provisional details, and export preview. Four main tabs remain.
+- Design: inspected all 22 V4 Figma frames and mapped their colors, typography, 24 px content inset, pastel cards, sticky bottom action, and main states into responsive Flutter layouts. Device pixel review remains pending.
+- Verification: V4 widget flow passed, covering subject→assessment empty state→create→numeric zero save→detail→weight validity changes. Existing class flow passed. `dart format` passed; `flutter analyze --no-pub` found no issues. Export action is disabled until Phase 6 workbook integration.
+- Next: V4 Phase 6 XLSX, V1/V2 backup compatibility, and delivery.
+
 ## V4 PHASE 4 — Assessment Management and Persistence
 
 - Status: PASS (2026-11-14) on focused repository integration tests.

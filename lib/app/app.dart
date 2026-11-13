@@ -9,6 +9,7 @@ import '../features/academics/presentation/roster_screens.dart';
 import '../features/attendance/presentation/attendance_screens.dart';
 import '../features/dashboard/presentation/dashboard_screen.dart';
 import '../features/history/presentation/history_screens.dart';
+import '../features/grading/presentation/grading_screens.dart';
 import '../features/onboarding/presentation/onboarding_screens.dart';
 import '../features/reports/data/report_repository.dart';
 import '../features/reports/presentation/report_screens.dart';
@@ -76,6 +77,137 @@ final appRouterProvider = Provider<GoRouter>((ref) {
                 builder: (context, state) => ClassDetailScreen(
                   id: int.parse(state.pathParameters['id']!),
                 ),
+                routes: [
+                  GoRoute(
+                    path: 'mapel/:subjectId',
+                    builder: (context, state) => SubjectDetailScreen(
+                      classId: int.parse(state.pathParameters['id']!),
+                      subjectId: int.parse(state.pathParameters['subjectId']!),
+                    ),
+                    routes: [
+                      GoRoute(
+                        path: 'penilaian',
+                        builder: (context, state) => AssessmentOverviewScreen(
+                          classId: int.parse(state.pathParameters['id']!),
+                          subjectId: int.parse(
+                            state.pathParameters['subjectId']!,
+                          ),
+                        ),
+                        routes: [
+                          GoRoute(
+                            path: 'tambah',
+                            builder: (context, state) => AssessmentFormScreen(
+                              classId: int.parse(state.pathParameters['id']!),
+                              subjectId: int.parse(
+                                state.pathParameters['subjectId']!,
+                              ),
+                            ),
+                          ),
+                          GoRoute(
+                            path: ':assessmentId',
+                            builder: (context, state) => AssessmentDetailScreen(
+                              classId: int.parse(state.pathParameters['id']!),
+                              subjectId: int.parse(
+                                state.pathParameters['subjectId']!,
+                              ),
+                              assessmentId: int.parse(
+                                state.pathParameters['assessmentId']!,
+                              ),
+                            ),
+                            routes: [
+                              GoRoute(
+                                path: 'nilai',
+                                builder: (context, state) => GradeEntryScreen(
+                                  classId: int.parse(
+                                    state.pathParameters['id']!,
+                                  ),
+                                  subjectId: int.parse(
+                                    state.pathParameters['subjectId']!,
+                                  ),
+                                  assessmentId: int.parse(
+                                    state.pathParameters['assessmentId']!,
+                                  ),
+                                ),
+                              ),
+                              GoRoute(
+                                path: 'edit',
+                                builder: (context, state) =>
+                                    AssessmentFormScreen(
+                                      classId: int.parse(
+                                        state.pathParameters['id']!,
+                                      ),
+                                      subjectId: int.parse(
+                                        state.pathParameters['subjectId']!,
+                                      ),
+                                      assessmentId: int.parse(
+                                        state.pathParameters['assessmentId']!,
+                                      ),
+                                    ),
+                              ),
+                            ],
+                          ),
+                        ],
+                      ),
+                      GoRoute(
+                        path: 'kategori',
+                        builder: (context, state) => CategoryManagementScreen(
+                          classId: int.parse(state.pathParameters['id']!),
+                          subjectId: int.parse(
+                            state.pathParameters['subjectId']!,
+                          ),
+                        ),
+                        routes: [
+                          GoRoute(
+                            path: 'tambah',
+                            builder: (context, state) =>
+                                const CategoryAddScreen(),
+                          ),
+                        ],
+                      ),
+                      GoRoute(
+                        path: 'bobot',
+                        builder: (context, state) => WeightSettingsScreen(
+                          classId: int.parse(state.pathParameters['id']!),
+                          subjectId: int.parse(
+                            state.pathParameters['subjectId']!,
+                          ),
+                        ),
+                      ),
+                      GoRoute(
+                        path: 'rekap',
+                        builder: (context, state) => GradeRecapScreen(
+                          classId: int.parse(state.pathParameters['id']!),
+                          subjectId: int.parse(
+                            state.pathParameters['subjectId']!,
+                          ),
+                        ),
+                        routes: [
+                          GoRoute(
+                            path: ':studentId',
+                            builder: (context, state) => StudentGradeScreen(
+                              classId: int.parse(state.pathParameters['id']!),
+                              subjectId: int.parse(
+                                state.pathParameters['subjectId']!,
+                              ),
+                              studentId: int.parse(
+                                state.pathParameters['studentId']!,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                      GoRoute(
+                        path: 'ekspor',
+                        builder: (context, state) => GradeExportScreen(
+                          classId: int.parse(state.pathParameters['id']!),
+                          subjectId: int.parse(
+                            state.pathParameters['subjectId']!,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
               ),
             ],
           ),

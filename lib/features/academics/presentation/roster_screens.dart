@@ -309,6 +309,9 @@ class _ClassSubjectPanelState extends ConsumerState<ClassSubjectPanel> {
                 for (final subject in subjects)
                   InputChip(
                     label: Text(subject.name),
+                    onPressed: () => context.push(
+                      '/kelas/${widget.classId}/mapel/${subject.id}',
+                    ),
                     onDeleted: () async {
                       await ref
                           .read(rosterRepositoryProvider)
