@@ -1,5 +1,17 @@
 ﻿# Development Progress
 
+## V4 PHASE 7 — Final QA and Android Release
+
+- Status: PASS for local automated and release checks (2026-11-14). Android device acceptance and production signing remain pending; no device result is claimed.
+- Implementation: expanded the realistic workflow to 40 students with attendance H/S/I/A, five assessments, numeric zero/blank/EX, scoped weights, provisional/final results, corrections, weight audit, both XLSX reports, backup, and restore. Android version advanced from `1.0.0+1` to `1.1.0+2`; application ID remains `com.presensiku.presensiku`.
+- Verification: `dart format lib test` made no changes; `flutter analyze --no-pub` found no issues; final complete `flutter test --no-pub --reporter expanded` passed 43/43. The intentional failed-migration rollback test emits a SQLite error while still passing. `flutter build apk --release --no-pub` completed successfully (Gradle 276.7 s).
+- APK: `C:\Project\PresensiKu\build\app\outputs\flutter-apk\app-release.apk`; 58,981,581 bytes; SHA-256 `69B396A66FE940B04EBF4F1EB5790B6746AF321C28D780B0DD09434B61F7D9E7`.
+- Package: `aapt dump badging` confirms `com.presensiku.presensiku`, versionName `1.1.0`, versionCode `2`, label `PresensiKu`, minimum API 24, target API 36, and launcher activity `com.presensiku.presensiku.MainActivity`. The 640-density packaged launcher PNG was extracted and visually checked against the supplied logo. No INTERNET permission is present in the APK manifest.
+- Signing: `apksigner verify --verbose --print-certs` passed APK Signature Scheme v2. Signer is `C=US, O=Android, CN=Android Debug` with certificate SHA-256 `e25c8af199928e96c035770b423bf522680c8aef3449e153555148e5ff2d1e3e`. This is a debug-signed release-mode APK for local QA; production distribution needs an owner-controlled release key. No key or credentials were generated or committed.
+- Device QA: `adb devices` returned no attached devices; `C:\Android\Sdk\emulator\emulator.exe` is absent. Installation, launch, in-place phone upgrade, Android picker/share sheet, airplane mode, and rendered Figma comparison remain pending in `ANDROID_QA_CHECKLIST.md`.
+- GitHub: no push attempted. The earlier approval denial remains in force; remote synchronization requires explicit authorization and approval by the applicable mechanism.
+- Next owner action: back up V1 data before in-place upgrade, install the V4 APK on Android API 24+, complete and record the manual QA checklist, then configure production signing if distribution is intended.
+
 ## V4 PHASE 6 — Statistics, Excel, and Backup Integration
 
 - Status: PASS (2026-11-14) on focused export and restore verification.

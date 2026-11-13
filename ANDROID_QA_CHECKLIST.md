@@ -18,4 +18,17 @@ Record the device model, Android version, APK SHA-256, result, and any screensho
 - [ ] Compare screens 01–16 and supporting states with the Figma design. Check small screens, large text, keyboard visibility, scrolling, safe areas, and H/S/I/A button spacing.
 - [ ] Confirm Android back navigation and repeated save taps do not create duplicate records or leave blocked controls.
 
-The current database schema is v1. Existing tests verify creation and reopening at v1; no upgrade from an earlier released schema exists to test yet.
+## V4 grading and upgrade checks (pending device verification)
+
+- [ ] Before installing V4 over V1, save a V1 `.pkbackup`, copy it off the device, and confirm it can be inspected. Retain the previous APK until the upgrade is accepted.
+- [ ] Upgrade the installed V1 app in place. Confirm profile, periods, classes, students, subjects, attendance history, and reports remain unchanged after restart.
+- [ ] Follow Kelas → Detail Kelas → Mata Pelajaran → Detail Mata Pelajaran. Open both Absensi and Penilaian without changing the four main tabs.
+- [ ] Create Tugas, Ulangan, UTS, UAS, Sikap, and a custom category assessment. Check dates, BAB, title, description, maximum score, required flag, edit, archive, and deletion confirmation.
+- [ ] Enter numeric zero, leave a score blank, mark another EX, and correct each. Confirm progress, keyboard behavior, out-of-range validation, and unsaved-change confirmation after Android Back.
+- [ ] Configure weights totaling 99%, 100%, and 101%; only 100% should save. Check 0% is allowed, changes update recap, and the audit persists after restart.
+- [ ] Compare final and provisional grades for incomplete, all-EX, and completed students. Confirm only complete final grades affect class average, highest/lowest, and distribution.
+- [ ] Save and share the three-sheet grade XLSX through Android UI. Open it in a spreadsheet app and check blank, numeric 0, EX, year/semester, and weights.
+- [ ] Back up V2 data, modify grades, restore it, and verify attendance plus grades. Restore a V1 backup into V2 and confirm grading records are empty while attendance survives. Cancel restore once and test a corrupt file.
+- [ ] Use airplane mode for the full grading flow. Compare V4 frames 72:112–72:340 and 77:112/77:140 with the rendered app at small and large text sizes.
+
+Schema V2 migration, V1/V2 backup formats, and the 40-student flow are covered by automated tests. Android device and native picker/share behavior remain unverified until these checks are recorded on a device.

@@ -1,9 +1,15 @@
+import 'dart:io';
+
 import 'package:excel/excel.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:presensiku/core/database/app_database.dart';
 import 'package:presensiku/features/academics/data/class_repository.dart';
 import 'package:presensiku/features/academics/data/roster_repository.dart';
 import 'package:presensiku/features/attendance/data/attendance_repository.dart';
+import 'package:presensiku/features/grading/data/grade_report_repository.dart';
+import 'package:presensiku/features/grading/data/grade_xlsx_exporter.dart';
+import 'package:presensiku/features/grading/data/grading_repository.dart';
+import 'package:presensiku/features/grading/domain/grade_calculator.dart';
 import 'package:presensiku/features/history/data/history_repository.dart';
 import 'package:presensiku/features/onboarding/data/profile_repository.dart';
 import 'package:presensiku/features/reports/data/report_repository.dart';
@@ -15,11 +21,13 @@ void main() {
   sqfliteFfiInit();
 
   test(
-    '40-student sessions, correction, archive, Excel, and restore agree',
+    '40-student attendance, grading, corrections, Excel, and restore agree',
     () async {
+      final directory = await Directory.systemTemp.createTemp('presensiku-qa-');
+      addTearDown(() => directory.delete(recursive: true));
       final app = await AppDatabase.open(
         factory: databaseFactoryFfi,
-        path: inMemoryDatabasePath,
+        path: '${directory.path}/source.db',
       );
       addTearDown(app.close);
       await ProfileRepository(app.database).save(name: 'Ibu Sari');
@@ -93,16 +101,170 @@ void main() {
       expect(workbook['Detail Absensi'].rows.length, 161);
       expect(workbook['Rekap Absensi'].rows.length, 41);
 
+      final grading = GradingRepository(app.database);
+      final assessmentIds = <int, int>{};
+      final categories = await grading.categories();
+      final categoryIds = <String, int>{
+        for (final row in categories) row['name'] as String: row['id'] as int,
+      };
+      final maxima = <String, double>{
+        'Tugas': 20,
+        'Ulangan': 50,
+        'UTS': 100,
+        'UAS': 100,
+        'Sikap': 100,
+      };
+      for (final category in maxima.entries) {
+        assessmentIds[categoryIds[category.key]!] = await grading
+            .createAssessment(
+              classId: classId,
+              subjectId: subjectId,
+              periodId: period,
+              categoryId: categoryIds[category.key]!,
+              date: '2026-11-14',
+              title: '${category.key} BAB 1',
+              maxScore: category.value,
+            );
+      }
+      final allStudents = await app.database.query(
+        'student',
+        where: 'class_id = ?',
+        whereArgs: [classId],
+        orderBy: 'attendance_number',
+      );
+      for (final category in maxima.entries) {
+        final values = <int, GradeValue>{};
+        for (var index = 0; index < allStudents.length; index++) {
+          final id = allStudents[index]['id'] as int;
+          if (category.key == 'Tugas' && index == 0) {
+            values[id] = const GradeValue.graded(0);
+          } else if (category.key == 'Ulangan' && index == 1) {
+            values[id] = const GradeValue.exempt();
+          } else if (category.key == 'UAS' && index == 2) {
+            values[id] = const GradeValue.ungraded();
+          } else {
+            values[id] = GradeValue.graded(category.value * 0.8);
+          }
+        }
+        await grading.saveGrades(
+          assessmentIds[categoryIds[category.key]!]!,
+          values,
+        );
+      }
+      await grading.saveWeights(
+        classId: classId,
+        subjectId: subjectId,
+        periodId: period,
+        values: {
+          categoryIds['Tugas']!: 30,
+          categoryIds['Ulangan']!: 15,
+          categoryIds['UTS']!: 25,
+          categoryIds['UAS']!: 25,
+          categoryIds['Sikap']!: 5,
+        },
+      );
+      final firstResult = await grading.resultForStudent(
+        classId: classId,
+        subjectId: subjectId,
+        periodId: period,
+        studentId: allStudents[0]['id'] as int,
+      );
+      final secondResult = await grading.resultForStudent(
+        classId: classId,
+        subjectId: subjectId,
+        periodId: period,
+        studentId: allStudents[1]['id'] as int,
+      );
+      final thirdResult = await grading.resultForStudent(
+        classId: classId,
+        subjectId: subjectId,
+        periodId: period,
+        studentId: allStudents[2]['id'] as int,
+      );
+      expect(firstResult?.finalGrade, closeTo(56, 0.00001));
+      expect(secondResult?.finalGrade, isNull);
+      expect(secondResult?.provisional, closeTo(80, 0.00001));
+      expect(secondResult?.incompleteReasons.join(' '), contains('EX'));
+      expect(thirdResult?.finalGrade, isNull);
+      expect(thirdResult?.provisional, closeTo(80, 0.00001));
+      final gradeReport = await GradeReportRepository(app.database)
+          .load(classId: classId, subjectId: subjectId, periodId: period);
+      final gradeWorkbook = Excel.decodeBytes(
+        const GradeXlsxExporter().build(gradeReport),
+      );
+      expect(gradeWorkbook['Detail Penilaian'].rows.length, 201);
+      expect(gradeWorkbook['Rekap per Kategori'].rows.length, 201);
+      expect(gradeWorkbook['Nilai Akhir'].rows.length, 41);
+      final scoreCells = gradeWorkbook['Detail Penilaian'].rows
+          .skip(1)
+          .map((row) => row[12]?.value)
+          .toList();
+      expect(scoreCells, contains(IntCellValue(0)));
+      expect(scoreCells, contains(TextCellValue('EX')));
+      expect(scoreCells, contains(null));
+
+      await grading.saveGrades(assessmentIds[categoryIds['Ulangan']!]!, {
+        allStudents[1]['id'] as int: const GradeValue.graded(40),
+      });
+      await grading.saveGrades(assessmentIds[categoryIds['UAS']!]!, {
+        allStudents[2]['id'] as int: const GradeValue.graded(80),
+      });
+      await grading.saveWeights(
+        classId: classId,
+        subjectId: subjectId,
+        periodId: period,
+        values: {
+          categoryIds['Tugas']!: 0,
+          categoryIds['Ulangan']!: 15,
+          categoryIds['UTS']!: 25,
+          categoryIds['UAS']!: 55,
+          categoryIds['Sikap']!: 5,
+        },
+      );
+      final corrected = await grading.resultForStudent(
+        classId: classId,
+        subjectId: subjectId,
+        periodId: period,
+        studentId: allStudents[0]['id'] as int,
+      );
+      expect(corrected?.finalGrade, closeTo(80, 0.00001));
+      expect(
+        (await grading.auditLog(
+          classId: classId,
+          subjectId: subjectId,
+          periodId: period,
+        )).length,
+        2,
+      );
+
       final backup = await BackupRepository(app.database).create();
       final restored = await AppDatabase.open(
         factory: databaseFactoryFfi,
-        path: inMemoryDatabasePath,
+        path: '${directory.path}/restored.db',
       );
       addTearDown(restored.close);
       await BackupRepository(restored.database).restore(backup);
       final after = await ReportRepository(restored.database).load();
       expect(after.details.length, report.details.length);
       expect(after.summaries.first.attendancePercentage, 0);
+      final restoredGrading = GradingRepository(restored.database);
+      expect(
+        (await restoredGrading.resultForStudent(
+          classId: classId,
+          subjectId: subjectId,
+          periodId: period,
+          studentId: allStudents[0]['id'] as int,
+        ))?.finalGrade,
+        closeTo(80, 0.00001),
+      );
+      expect(
+        (await restoredGrading.auditLog(
+          classId: classId,
+          subjectId: subjectId,
+          periodId: period,
+        )).length,
+        2,
+      );
       expect(
         (await restored.database.rawQuery('PRAGMA foreign_key_check')),
         isEmpty,

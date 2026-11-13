@@ -2,6 +2,7 @@ import 'dart:typed_data';
 
 import 'package:excel/excel.dart';
 
+import '../domain/grade_calculator.dart';
 import 'grade_report_repository.dart';
 
 class GradeXlsxExporter {
@@ -177,7 +178,7 @@ class GradeXlsxExporter {
         : DoubleCellValue(score.toDouble());
   }
 
-  String _status(result) {
+  String _status(GradeResult? result) {
     if (result?.finalGrade != null) return 'Final';
     if (result?.provisional != null) return 'Sementara';
     return 'Belum lengkap';
