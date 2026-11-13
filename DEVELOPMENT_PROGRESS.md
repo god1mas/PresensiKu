@@ -1,5 +1,15 @@
 ﻿# Development Progress
 
+## V4 PHASE 1 — Repository Audit and Implementation Baseline
+
+- Status: PASS (2026-11-13).
+- Baseline: clean `main` at `41077d6`; existing eight-table SQLite V1 schema, attendance and report routes, XLSX export, backup envelope, and 23 automated tests inspected. Existing app and historical commits preserved.
+- Design: inspected Figma V4 page with 22 frames, including subject detail, assessment entry, category/weight settings, recap, export, and error/empty states.
+- Plan: `V4_IMPLEMENTATION_PLAN.md` records additive V1→V2 migration, explicit grade states, V1/V2 backup compatibility, recovery path, and phase checks.
+- Verification: baseline `flutter test --no-pub --reporter expanded` passed 23/23. No V4 code change yet.
+- GitHub push remains denied by the earlier approval mechanism; no push attempted.
+- Next: V4 Phase 2 additive migration and preservation tests.
+
 ## PHASE 0 — Repository and Design Audit
 
 - Status: PASS (2026-11-11)
