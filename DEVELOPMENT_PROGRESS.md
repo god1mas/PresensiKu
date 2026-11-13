@@ -1,5 +1,12 @@
 ﻿# Development Progress
 
+## V4 PHASE 4 — Assessment Management and Persistence
+
+- Status: PASS (2026-11-14) on focused repository integration tests.
+- Implementation: transactional assessment creation/edit/archive/soft deletion, category creation/rename/archive, grade batch save and corrections, scoped weight configuration, weight audit history, and student result recalculation. Repository rejects invalid scores, mismatched student/class/period, unlinked subjects, and invalid weight totals. Historical grade and assessment snapshots survive master-data edits.
+- Verification: 2/2 focused integration tests passed, covering reopen persistence, zero→EX correction and immediate summary change, category rename/archive, soft deletion retaining grades, invalid batch rollback, cross-period rejection, and weight audit. Full regression and Android build remain for Phase 7.
+- Next: V4 Phase 5 Figma screens, navigation, and widget tests.
+
 ## V4 PHASE 3 — Grading Domain and Calculation Engine
 
 - Status: PASS (2026-11-14) on required calculation cases.
