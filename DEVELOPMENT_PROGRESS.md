@@ -161,3 +161,14 @@
 - Design reference: Figma V4 Detail Mata Pelajaran frame 72:112 retains the paired activity tiles and existing design tokens; no new static assets were required.
 - Release/device: No APK generated for this task. The existing app-release.apk is the older PresensiKu artifact. Native installation, offline operation, file picker/share, and rendered layout remain for the next Android QA task.
 - GitHub: No push attempted; prior approval denial remains in force.
+
+## KelasKu 1.2.0+3 Android QA build (2026-11-14)
+
+- Status: PASS for source, automated tests, APK build, metadata, and signing verification. Physical-device installation and functional QA remain PENDING.
+- Version and identity: pubspec version 1.2.0+3; generated APK package com.presensiku.presensiku, launcher label KelasKu, minimum API 24, target API 36. Android application ID, SQLite database filename/schema, migrations, and backup format identifier were unchanged.
+- Verification: dart format lib test completed with no changes; flutter analyze --no-pub found no issues; flutter test --no-pub --reporter expanded passed 43/43 tests. Flutter build apk --release --no-pub completed successfully in 377.4 seconds.
+- QA APK: C:\Project\PresensiKu\build\app\outputs\flutter-apk\app-release.apk; 58,981,669 bytes; SHA-256 6B4A767C317398D51C886DB9F4F24D531997CF9998CC73948C2A2492940A43F8.
+- Signing: apksigner verify passed. Release-mode APK is signed with the existing Android Debug certificate, SHA-256 e25c8af199928e96c035770b423bf522680c8aef3449e153555148e5ff2d1e3e. No production key was created.
+- Previous APK comparison: C:\Users\MyBook Z Series\Downloads\PresensiKu-v1.1.0-test.apk was preserved unchanged; it has the same package ID and signing certificate, version 1.1.0/code 2, and SHA-256 69B396A66FE940B04EBF4F1EB5790B6746AF321C28D780B0DD09434B61F7D9E7. In-place update is supported by this APK comparison, but not yet confirmed on a physical device; the actually installed APK could differ.
+- Device QA: adb devices returned no connected devices. Installation, launch, retained local data after update, native Excel save/share, backup/restore, airplane mode, and responsive layouts remain PENDING in ANDROID_QA_CHECKLIST.md. Never uninstall to force the update.
+- GitHub: No push attempted. Previous approval denial remains in force.

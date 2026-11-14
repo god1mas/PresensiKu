@@ -33,17 +33,19 @@ Teacher onboarding, dashboard, academic periods, classes, students, subjects, at
 
 ## Install and use
 
-The existing V4 release output is the previous PresensiKu build, not the KelasKu rebrand. No KelasKu APK has been generated yet. Its path is `C:\Project\PresensiKu\build\app\outputs\flutter-apk\app-release.apk` (58,981,581 bytes). Package: `com.presensiku.presensiku`; version: `1.1.0` (code 2); Android 7.0 / API 24 or later. SHA-256: `69B396A66FE940B04EBF4F1EB5790B6746AF321C28D780B0DD09434B61F7D9E7`.
+KelasKu 1.2.0 (code 3) QA APK: `C:\Project\PresensiKu\build\app\outputs\flutter-apk\app-release.apk` (58,981,669 bytes). Package: `com.presensiku.presensiku`; Android 7.0 / API 24 or later. SHA-256: `6B4A767C317398D51C886DB9F4F24D531997CF9998CC73948C2A2492940A43F8`.
 
-For the previous PresensiKu build only, copy the APK to an Android phone, open it from the file manager, and allow that file manager to install apps when Android prompts. Alternatively, enable USB debugging, connect the phone, and run:
+The previous PresensiKu 1.1.0 (code 2) APK is preserved at `C:\Users\MyBook Z Series\Downloads\PresensiKu-v1.1.0-test.apk`. Both APKs have the same debug signing certificate SHA-256 fingerprint: `e25c8af199928e96c035770b423bf522680c8aef3449e153555148e5ff2d1e3e`. This supports an in-place update from that specific previous APK, but installation on a physical device has not yet been tested. Back up your data first; never uninstall the app to force an update.
+
+Copy the KelasKu APK to an Android phone and open it from the file manager. Alternatively, enable USB debugging, connect the phone, and run:
 
 ```powershell
 & 'C:\Android\Sdk\platform-tools\adb.exe' install -r 'C:\Project\PresensiKu\build\app\outputs\flutter-apk\app-release.apk'
 ```
 
-Once a KelasKu APK is built in the next task, open KelasKu and enter the teacher profile, create an academic period and class, and add students and subjects. Choose Mulai Kelas → Pilih Kelas → Mata Pelajaran, then use Presensi for H/S/I/A attendance or Penilaian for grades. The selected class and subject carry into attendance setup. Create assessments, enter each student's score or EX, set weights totaling 100%, and open Rekap Nilai. The app labels incomplete results as provisional. Use Ekspor Nilai Excel to save or share the three-sheet workbook.
+Open KelasKu and enter the teacher profile, create an academic period and class, and add students and subjects. Choose Mulai Kelas → Pilih Kelas → Mata Pelajaran, then use Presensi for H/S/I/A attendance or Penilaian for grades. The selected class and subject carry into attendance setup. Create assessments, enter each student's score or EX, set weights totaling 100%, and open Rekap Nilai. The app labels incomplete results as provisional. Use Ekspor Nilai Excel to save or share the three-sheet workbook.
 
-The previous V4 release build uses the Android **debug signing key**, as configured in `android/app/build.gradle.kts`. It is intended for local installation and QA; production distribution requires an owner-controlled release key and signing configuration. No signing credentials are tracked. Back up app data before changing signing keys or uninstalling: an APK signed with another key cannot update the installed app directly.
+This release-mode QA build uses the Android **debug signing key**, as configured in `android/app/build.gradle.kts`. It is intended for local installation and QA; production distribution requires an owner-controlled release key and signing configuration. No signing credentials are tracked. Back up app data before changing signing keys or uninstalling: an APK signed with another key cannot update the installed app directly.
 
 ## Verification limits and GitHub
 
