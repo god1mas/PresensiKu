@@ -199,3 +199,9 @@
 - Phase 2 PASS: Schema V5 adds academic-year identity, class-to-period mapping, student identity, semester-aware attendance uniqueness, and identifier snapshots. School classes/rosters/subjects/colors persist within the year; university classes and enrollment remain semester-specific. Attendance, assessments, grades, weights, dashboard, and exports respect actual semester. Settings distinguishes selected from active periods and confirms activation. Populated migration and V1/V2/V3 backup restore preserve IDs and historical records.
 - Verification: `dart format lib test` completed; `flutter analyze --no-pub` reported no issues; `flutter test --no-pub --reporter expanded` passed 57/57 tests. Coverage includes a 40-student cycle, Ganjil/Genap Meeting 1, repeated switching, restart, different years, university isolation, and historical reports.
 - Next: Phase 3 class archive recovery, then Phase 4 grading-history UI, Phase 5 full regression, and Phase 6 Android QA APK. No APK has been built for this redesign yet. Device QA remains pending. No GitHub push attempted.
+
+## KelasKu 1.4 academic redesign — Phase 3 checkpoint (2026-11-16)
+
+- Phase 3 PASS: Classes has Aktif/Arsip views by academic period. Pulihkan Kelas confirms the action, retains the original class ID/color/history, restores only students and subject links archived in the same class operation, and reports active-name conflicts without partial writes. Previously archived students and deliberate subject unlinks remain archived. A 320 px period-selector overflow was fixed.
+- Verification: Two dedicated repository/UI tests passed, including restart, backup restore, conflict rollback and 320 px rendering; `flutter analyze --no-pub` found no issues.
+- Next: Phase 4 grading-history filter UI, Phase 5 full regression, Phase 6 APK. Device QA remains pending. No GitHub push attempted.

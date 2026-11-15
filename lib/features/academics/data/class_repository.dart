@@ -31,6 +31,7 @@ class SchoolClass {
     required this.name,
     required this.studentCount,
     required this.colorIndex,
+    this.archivedAt,
   });
 
   final int id;
@@ -38,6 +39,7 @@ class SchoolClass {
   final String name;
   final int studentCount;
   final int colorIndex;
+  final String? archivedAt;
 }
 
 class ClassRepository {
@@ -145,6 +147,38 @@ class ClassRepository {
             name: row['name'] as String,
             studentCount: row['student_count'] as int,
             colorIndex: row['color_index'] as int,
+          ),
+        )
+        .toList();
+  }
+
+  Future<List<SchoolClass>> archivedClasses(
+    int periodId, {
+    String search = '',
+  }) async {
+    final term = search.trim().toLowerCase();
+    final rows = await database.rawQuery(
+      '''
+      SELECT c.id, c.period_id, c.name, c.color_index, c.archived_at,
+        COUNT(s.id) AS student_count
+      FROM school_class c
+      LEFT JOIN student s ON s.class_id = c.id AND s.archived_at = c.archived_at
+      WHERE c.id IN (SELECT class_id FROM class_period WHERE period_id = ?)
+        AND c.archived_at IS NOT NULL
+        AND (? = '' OR lower(c.name) LIKE ?)
+      GROUP BY c.id ORDER BY c.archived_at DESC, lower(c.name)
+    ''',
+      [periodId, term, '%$term%'],
+    );
+    return rows
+        .map(
+          (row) => SchoolClass(
+            id: row['id'] as int,
+            periodId: row['period_id'] as int,
+            name: row['name'] as String,
+            studentCount: row['student_count'] as int,
+            colorIndex: row['color_index'] as int,
+            archivedAt: row['archived_at'] as String,
           ),
         )
         .toList();
@@ -288,6 +322,71 @@ class ClassRepository {
         {'archived_at': now},
         where: 'class_id = ? AND archived_at IS NULL',
         whereArgs: [id],
+      );
+    });
+  }
+
+  Future<void> restoreClass(int id) async {
+    await database.transaction((txn) async {
+      final rows = await txn.query(
+        'school_class',
+        where: 'id = ? AND archived_at IS NOT NULL',
+        whereArgs: [id],
+      );
+      if (rows.isEmpty) {
+        throw const FormatException('Kelas tidak ada di arsip.');
+      }
+      final row = rows.single;
+      await _checkName(
+        txn,
+        row['period_id'] as int,
+        row['name'] as String,
+        exclude: id,
+      );
+      final archivedAt = row['archived_at'];
+      final numberConflicts = await txn.rawQuery(
+        '''SELECT 1 FROM student pending
+        JOIN student active ON active.class_id = pending.class_id
+          AND active.attendance_number = pending.attendance_number
+          AND active.archived_at IS NULL
+        WHERE pending.class_id = ? AND pending.archived_at = ? LIMIT 1''',
+        [id, archivedAt],
+      );
+      if (numberConflicts.isNotEmpty) {
+        throw const FormatException(
+          'Nomor siswa aktif bentrok dengan siswa arsip kelas.',
+        );
+      }
+      final linkConflicts = await txn.rawQuery(
+        '''SELECT 1 FROM class_subject pending
+        JOIN class_subject active ON active.class_id = pending.class_id
+          AND active.subject_id = pending.subject_id AND active.archived_at IS NULL
+        WHERE pending.class_id = ? AND pending.archived_at = ? LIMIT 1''',
+        [id, archivedAt],
+      );
+      if (linkConflicts.isNotEmpty) {
+        throw const FormatException(
+          'Relasi mata pelajaran aktif bentrok dengan arsip kelas.',
+        );
+      }
+      final now = DateTime.now().toIso8601String();
+      await txn.update(
+        'school_class',
+        {'archived_at': null, 'updated_at': now},
+        where: 'id = ?',
+        whereArgs: [id],
+      );
+      await txn.update(
+        'student',
+        {'archived_at': null, 'updated_at': now},
+        where: 'class_id = ? AND archived_at = ?',
+        whereArgs: [id, archivedAt],
+      );
+      await txn.rawUpdate(
+        '''UPDATE class_subject SET archived_at = NULL, updated_at = ?
+        WHERE class_id = ? AND archived_at = ?
+          AND subject_id IN (SELECT id FROM subject WHERE archived_at IS NULL)''',
+        [now, id, archivedAt],
       );
     });
   }

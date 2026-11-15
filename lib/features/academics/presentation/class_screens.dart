@@ -21,11 +21,49 @@ class ClassListScreen extends ConsumerStatefulWidget {
 class _ClassListScreenState extends ConsumerState<ClassListScreen> {
   int? selectedPeriodId;
   String search = '';
+  bool archivedView = false;
   int revision = 0;
 
   void refresh() {
     setState(() => revision++);
     ref.invalidate(dashboardSummaryProvider);
+  }
+
+  Future<void> restoreClass(SchoolClass item) async {
+    final confirmed = await showAcademicDialog<bool>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        title: const Text('Pulihkan Kelas?'),
+        content: Text(
+          'Pulihkan ${item.name} dengan ID, warna, dan riwayat aslinya? Siswa dan mata pelajaran yang diarsipkan terpisah tetap berada di arsip.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(dialogContext, false),
+            child: const Text('Batal'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.pop(dialogContext, true),
+            child: const Text('Pulihkan Kelas'),
+          ),
+        ],
+      ),
+    );
+    if (confirmed != true) return;
+    try {
+      await ref.read(classRepositoryProvider).restoreClass(item.id);
+      if (mounted) {
+        refresh();
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Kelas berhasil dipulihkan.')),
+        );
+      }
+    } catch (error) {
+      if (mounted) {
+        ScaffoldMessenger.of(context)
+            .showSnackBar(SnackBar(content: Text(_message(error))));
+      }
+    }
   }
 
   Future<void> addPeriod() async {
@@ -204,6 +242,7 @@ class _ClassListScreenState extends ConsumerState<ClassListScreen> {
                     Expanded(
                       child: DropdownButtonFormField<int>(
                         key: ValueKey(chosen.id),
+                        isExpanded: true,
                         initialValue: chosen.id,
                         decoration: const InputDecoration(
                           labelText: 'Periode akademik',
@@ -214,6 +253,8 @@ class _ClassListScreenState extends ConsumerState<ClassListScreen> {
                                 value: p.id,
                                 child: Text(
                                   '${p.label}${p.isActive ? ' · Aktif' : ''}',
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
                                 ),
                               ),
                             )
@@ -240,6 +281,22 @@ class _ClassListScreenState extends ConsumerState<ClassListScreen> {
                   label: const Text('Jadikan periode aktif'),
                 ),
               Padding(
+                padding: const EdgeInsets.symmetric(horizontal: AppSpace.lg),
+                child: Align(
+                  alignment: Alignment.centerLeft,
+                  child: SegmentedButton<bool>(
+                    segments: const [
+                      ButtonSegment(value: false, label: Text('Aktif')),
+                      ButtonSegment(value: true, label: Text('Arsip')),
+                    ],
+                    showSelectedIcon: false,
+                    selected: {archivedView},
+                    onSelectionChanged: (selection) =>
+                        setState(() => archivedView = selection.single),
+                  ),
+                ),
+              ),
+              Padding(
                 padding: const EdgeInsets.symmetric(
                   horizontal: AppSpace.lg,
                   vertical: AppSpace.base,
@@ -254,8 +311,10 @@ class _ClassListScreenState extends ConsumerState<ClassListScreen> {
               ),
               Expanded(
                 child: FutureBuilder<List<SchoolClass>>(
-                  key: ValueKey('${chosen.id}:$revision:$search'),
-                  future: repository.classes(chosen.id, search: search),
+                  key: ValueKey('${chosen.id}:$revision:$search:$archivedView'),
+                  future: archivedView
+                      ? repository.archivedClasses(chosen.id, search: search)
+                      : repository.classes(chosen.id, search: search),
                   builder: (context, classSnapshot) {
                     if (classSnapshot.hasError) {
                       return const Center(
@@ -266,6 +325,41 @@ class _ClassListScreenState extends ConsumerState<ClassListScreen> {
                       return const Center(child: CircularProgressIndicator());
                     }
                     final classes = classSnapshot.data!;
+                    if (archivedView) {
+                      if (classes.isEmpty) {
+                        return Center(
+                          child: Text(
+                            search.isEmpty
+                                ? 'Belum ada kelas di arsip'
+                                : 'Kelas arsip tidak ditemukan',
+                          ),
+                        );
+                      }
+                      return ListView(
+                        padding: const EdgeInsets.all(AppSpace.lg),
+                        children: [
+                          Text(
+                            'Arsip kelas · ${chosen.label}',
+                            style: Theme.of(context).textTheme.titleLarge,
+                          ),
+                          const SizedBox(height: AppSpace.base),
+                          for (final item in classes)
+                            Card(
+                              color: classColor(item.colorIndex).tint,
+                              child: ListTile(
+                                title: Text(item.name),
+                                subtitle: AcademicText(
+                                  '${item.studentCount} siswa dapat dipulihkan · ${chosen.label}',
+                                ),
+                                trailing: TextButton(
+                                  onPressed: () => restoreClass(item),
+                                  child: const Text('Pulihkan'),
+                                ),
+                              ),
+                            ),
+                        ],
+                      );
+                    }
                     if (classes.isEmpty) {
                       return _EmptyClasses(
                         onAdd: () => addClass(chosen.id),
@@ -393,7 +487,7 @@ class _ClassListScreenState extends ConsumerState<ClassListScreen> {
       bottomNavigationBar: FutureBuilder<List<AcademicPeriod>>(
         future: repository.periods(),
         builder: (context, snapshot) =>
-            snapshot.hasData && snapshot.data!.isNotEmpty
+            snapshot.hasData && snapshot.data!.isNotEmpty && !archivedView
             ? Padding(
                 padding: const EdgeInsets.fromLTRB(
                   AppSpace.lg,
