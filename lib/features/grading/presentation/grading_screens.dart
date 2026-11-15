@@ -2291,7 +2291,7 @@ class _GradeExportScreenState extends ConsumerState<GradeExportScreen> {
             title: const Text('Ekspor Berhasil'),
             content: Text(
               'Berhasil dibuat: $filename\n'
-              '3 sheet · Detail, Kategori, Nilai Akhir',
+              '4 sheet · Detail, Kategori, Nilai Akhir, Matriks Nilai',
             ),
             actions: [
               if (!share)
@@ -2410,6 +2410,7 @@ class _GradeExportScreenState extends ConsumerState<GradeExportScreen> {
                 ListTile(title: Text('01  Detail Penilaian')),
                 ListTile(title: Text('02  Rekap per Kategori')),
                 ListTile(title: Text('03  Nilai Akhir')),
+                ListTile(title: Text('04  Matriks Nilai')),
               ],
             ),
           ),
