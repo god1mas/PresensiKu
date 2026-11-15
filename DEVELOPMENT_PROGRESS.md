@@ -205,3 +205,9 @@
 - Phase 3 PASS: Classes has Aktif/Arsip views by academic period. Pulihkan Kelas confirms the action, retains the original class ID/color/history, restores only students and subject links archived in the same class operation, and reports active-name conflicts without partial writes. Previously archived students and deliberate subject unlinks remain archived. A 320 px period-selector overflow was fixed.
 - Verification: Two dedicated repository/UI tests passed, including restart, backup restore, conflict rollback and 320 px rendering; `flutter analyze --no-pub` found no issues.
 - Next: Phase 4 grading-history filter UI, Phase 5 full regression, Phase 6 APK. Device QA remains pending. No GitHub push attempted.
+
+## KelasKu 1.4 academic redesign — Phase 4 checkpoint (2026-11-16)
+
+- Phase 4 PASS: Riwayat Penilaian now puts title search first, groups period/class/subject/date controls compactly, shows active filter chips, and provides one reset action. Labels follow education terminology. Historical assessment navigation carries the original semester. Layout supports 320 px and 393 px.
+- Verification: Three targeted widget tests passed for search, class/subject/period filtering, reset, Back/navigation, and narrow layouts. `flutter analyze --no-pub` found no issues.
+- Next: Phase 5 full regression and Phase 6 release-mode QA APK. Native device QA remains pending.

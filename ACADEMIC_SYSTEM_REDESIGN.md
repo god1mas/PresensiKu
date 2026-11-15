@@ -42,8 +42,8 @@ Backups support schemas 1–3. Profiles contain no education level.
 1. Education/profile/identity/terminology: PASS — 14 targeted tests, clean analyzer.
 2. Year and semester scope, migration, backup, switching: PASS — `dart format`, clean `flutter analyze`, 57/57 full tests. School Ganjil/Genap meeting 1 coexist; 40-student year continuity, isolated assessments/weights, repeat switching, restart, university enrollment isolation, populated V1/V2/V3 upgrades/backups, historical reports and active-period dashboard were verified.
 3. Class archive recovery: PASS — original ID/color/history retained, known cascade children restored, prior archives/unlinks retained, duplicate names roll back, backup/reopen verified, 320 px UI test and clean analyzer.
-4. Grading history filters and responsive UI: IN PROGRESS.
-5. Full regression: NOT STARTED.
+4. Grading history filters and responsive UI: PASS — title search, compact period/class/subject/date filters, visible active state/reset, historical detail navigation, 320/393 px widget tests, clean analyzer.
+5. Full regression: IN PROGRESS.
 6. APK, signing comparison, release documentation: NOT STARTED.
 
 Device QA must be reported separately from automated verification. No GitHub

@@ -93,11 +93,29 @@ class GradingDestinationScreen extends ConsumerStatefulWidget {
 
 class _GradingDestinationScreenState
     extends ConsumerState<GradingDestinationScreen> {
+  final searchController = TextEditingController();
   int? periodId;
   int? classId;
   int? subjectId;
   DateTimeRange? dateRange;
   String search = '';
+
+  @override
+  void dispose() {
+    searchController.dispose();
+    super.dispose();
+  }
+
+  void resetFilters() {
+    searchController.clear();
+    setState(() {
+      search = '';
+      periodId = null;
+      classId = null;
+      subjectId = null;
+      dateRange = null;
+    });
+  }
 
   bool _matchesDate(String date) {
     final selected = dateRange;
@@ -143,74 +161,23 @@ class _GradingDestinationScreenState
               .values
               .toList();
           final subjects = snapshot.data![2];
+          final filterWidth =
+              (MediaQuery.sizeOf(context).width -
+                  2 * AppSpace.lg -
+                  AppSpace.base) /
+              2;
+          final hasFilters =
+              periodId != null ||
+              classId != null ||
+              subjectId != null ||
+              dateRange != null ||
+              search.trim().isNotEmpty;
           return ListView(
             padding: const EdgeInsets.all(AppSpace.lg),
             children: [
-              DropdownButtonFormField<int?>(
-                initialValue: periodId,
-                decoration: InputDecoration(labelText: 'Periode akademik'),
-                items: [
-                  const DropdownMenuItem<int?>(
-                    value: null,
-                    child: Text('Semua periode'),
-                  ),
-                  for (final row in periods)
-                    DropdownMenuItem(
-                      value: row['id'] as int,
-                      child: Text('${row['year_label']} · ${row['semester']}'),
-                    ),
-                ],
-                onChanged: (value) => setState(() {
-                  periodId = value;
-                  classId = null;
-                  subjectId = null;
-                }),
-              ),
-              const SizedBox(height: AppSpace.base),
-              DropdownButtonFormField<int?>(
-                key: ValueKey('class:$periodId:$classId'),
-                initialValue: classId,
-                decoration: InputDecoration(labelText: 'Kelas'),
-                items: [
-                  const DropdownMenuItem<int?>(
-                    value: null,
-                    child: Text('Semua kelas'),
-                  ),
-                  for (final row in classes)
-                    DropdownMenuItem(
-                      value: row['id'] as int,
-                      child: Text(row['name'] as String),
-                    ),
-                ],
-                onChanged: (value) => setState(() {
-                  classId = value;
-                  subjectId = null;
-                }),
-              ),
-              const SizedBox(height: AppSpace.base),
-              DropdownButtonFormField<int?>(
-                key: ValueKey('subject:$classId:$subjectId'),
-                initialValue: subjectId,
-                decoration: InputDecoration(
-                  labelText: educationTerms(context)
-                      .translate('Mata pelajaran'),
-                ),
-                items: [
-                  const DropdownMenuItem<int?>(
-                    value: null,
-                    child: AcademicText('Semua mata pelajaran'),
-                  ),
-                  for (final row in subjects)
-                    DropdownMenuItem(
-                      value: row['id'] as int,
-                      child: Text(row['name'] as String),
-                    ),
-                ],
-                onChanged: (value) => setState(() => subjectId = value),
-              ),
-              const SizedBox(height: AppSpace.base),
               if (widget.history)
                 TextField(
+                  controller: searchController,
                   decoration: InputDecoration(
                     prefixIcon: Icon(Icons.search),
                     hintText: educationTerms(
@@ -219,14 +186,100 @@ class _GradingDestinationScreenState
                   ),
                   onChanged: (value) => setState(() => search = value),
                 ),
-              if (widget.history) ...[
-                const SizedBox(height: AppSpace.base),
-                Align(
-                  alignment: Alignment.centerLeft,
-                  child: Wrap(
-                    spacing: AppSpace.base,
-                    children: [
-                      OutlinedButton.icon(
+              if (widget.history) const SizedBox(height: AppSpace.base),
+              Wrap(
+                spacing: AppSpace.base,
+                runSpacing: AppSpace.base,
+                children: [
+                  SizedBox(
+                    width: filterWidth,
+                    child: DropdownButtonFormField<int?>(
+                      key: ValueKey('period:$periodId'),
+                      isExpanded: true,
+                      initialValue: periodId,
+                      decoration: const InputDecoration(labelText: 'Periode'),
+                      items: [
+                        const DropdownMenuItem<int?>(
+                          value: null,
+                          child: Text('Semua periode'),
+                        ),
+                        for (final row in periods)
+                          DropdownMenuItem(
+                            value: row['id'] as int,
+                            child: Text(
+                              '${row['year_label']} · ${row['semester']}',
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ),
+                      ],
+                      onChanged: (value) => setState(() {
+                        periodId = value;
+                        classId = null;
+                        subjectId = null;
+                      }),
+                    ),
+                  ),
+                  SizedBox(
+                    width: filterWidth,
+                    child: DropdownButtonFormField<int?>(
+                      key: ValueKey('class:$periodId:$classId'),
+                      isExpanded: true,
+                      initialValue: classId,
+                      decoration: const InputDecoration(labelText: 'Kelas'),
+                      items: [
+                        const DropdownMenuItem<int?>(
+                          value: null,
+                          child: Text('Semua kelas'),
+                        ),
+                        for (final row in classes)
+                          DropdownMenuItem(
+                            value: row['id'] as int,
+                            child: Text(
+                              row['name'] as String,
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ),
+                      ],
+                      onChanged: (value) => setState(() {
+                        classId = value;
+                        subjectId = null;
+                      }),
+                    ),
+                  ),
+                  SizedBox(
+                    width: filterWidth,
+                    child: DropdownButtonFormField<int?>(
+                      key: ValueKey('subject:$classId:$subjectId'),
+                      isExpanded: true,
+                      initialValue: subjectId,
+                      decoration: InputDecoration(
+                        labelText: educationTerms(context)
+                            .translate('Mata pelajaran'),
+                      ),
+                      items: [
+                        const DropdownMenuItem<int?>(
+                          value: null,
+                          child: AcademicText('Semua mata pelajaran'),
+                        ),
+                        for (final row in subjects)
+                          DropdownMenuItem(
+                            value: row['id'] as int,
+                            child: Text(
+                              row['name'] as String,
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ),
+                      ],
+                      onChanged: (value) => setState(() => subjectId = value),
+                    ),
+                  ),
+                  if (widget.history)
+                    SizedBox(
+                      width: filterWidth,
+                      child: OutlinedButton.icon(
                         onPressed: () async {
                           final picked = await showDateRangePicker(
                             context: context,
@@ -240,25 +293,81 @@ class _GradingDestinationScreenState
                         },
                         icon: const Icon(Icons.date_range_outlined),
                         label: Text(
-                          dateRange == null
-                              ? 'Semua tanggal'
-                              : '${dateRange!.start.day}/${dateRange!.start.month}/${dateRange!.start.year} – ${dateRange!.end.day}/${dateRange!.end.month}/${dateRange!.end.year}',
+                          dateRange == null ? 'Tanggal' : 'Tanggal aktif',
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
                         ),
                       ),
-                      if (dateRange != null)
-                        IconButton(
-                          tooltip: 'Hapus filter tanggal',
-                          onPressed: () => setState(() => dateRange = null),
-                          icon: const Icon(Icons.close),
+                    ),
+                ],
+              ),
+              if (widget.history && hasFilters) ...[
+                const SizedBox(height: AppSpace.base),
+                Wrap(
+                  spacing: AppSpace.sm,
+                  runSpacing: AppSpace.sm,
+                  crossAxisAlignment: WrapCrossAlignment.center,
+                  children: [
+                    if (search.trim().isNotEmpty)
+                      Chip(
+                        label: ConstrainedBox(
+                          constraints: const BoxConstraints(maxWidth: 200),
+                          child: Text(
+                            'Cari: $search',
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                          ),
                         ),
-                    ],
-                  ),
+                      ),
+                    if (periodId != null)
+                      Chip(
+                        label: ConstrainedBox(
+                          constraints: const BoxConstraints(maxWidth: 200),
+                          child: Text(
+                            'Periode: ${periods.firstWhere((p) => p['id'] == periodId)['year_label']} ${periods.firstWhere((p) => p['id'] == periodId)['semester']}',
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ),
+                      ),
+                    if (classId != null)
+                      Chip(
+                        label: ConstrainedBox(
+                          constraints: const BoxConstraints(maxWidth: 200),
+                          child: Text(
+                            'Kelas: ${classes.firstWhere((c) => c['id'] == classId)['name']}',
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ),
+                      ),
+                    if (subjectId != null)
+                      Chip(
+                        label: ConstrainedBox(
+                          constraints: const BoxConstraints(maxWidth: 200),
+                          child: Text(
+                            '${educationTerms(context).subject}: ${subjects.firstWhere((s) => s['id'] == subjectId)['name']}',
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ),
+                      ),
+                    if (dateRange != null)
+                      const Chip(label: Text('Tanggal aktif')),
+                    TextButton.icon(
+                      onPressed: resetFilters,
+                      icon: const Icon(Icons.restart_alt),
+                      label: const Text('Reset filter'),
+                    ),
+                  ],
                 ),
               ],
               const SizedBox(height: AppSpace.lg),
               if (widget.history)
                 FutureBuilder<List<Map<String, Object?>>>(
-                  key: ValueKey('$periodId:$classId:$subjectId:$search'),
+                  key: ValueKey(
+                    '$periodId:$classId:$subjectId:$search:$dateRange',
+                  ),
                   future: db.query(
                     'assessment',
                     where: [

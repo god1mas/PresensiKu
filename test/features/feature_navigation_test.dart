@@ -53,7 +53,7 @@ void main() {
     );
     await tester.pumpAndSettle();
     expect(find.text('Riwayat Penilaian'), findsWidgets);
-    expect(find.text('Semua tanggal'), findsOneWidget);
+    expect(find.text('Tanggal'), findsOneWidget);
     await tester.binding.handlePopRoute();
     await tester.pumpAndSettle();
     expect(find.text('Pilih Jenis Riwayat'), findsOneWidget);
