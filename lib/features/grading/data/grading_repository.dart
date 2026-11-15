@@ -32,6 +32,15 @@ class GradingRepository {
     if (clean.isEmpty) {
       throw const FormatException('Nama kategori wajib diisi.');
     }
+    final archived = await database.rawQuery(
+      'SELECT id FROM assessment_category WHERE archived_at IS NOT NULL AND lower(trim(name)) = lower(trim(?)) LIMIT 1',
+      [clean],
+    );
+    if (archived.isNotEmpty) {
+      throw const FormatException(
+        'Kategori ini ada di Arsip. Pulihkan kategori lama agar nilai dan bobotnya tetap terhubung.',
+      );
+    }
     final now = _now;
     return database.insert('assessment_category', {
       'name': clean,
@@ -62,6 +71,34 @@ class GradingRepository {
       whereArgs: [id],
     );
     if (changed != 1) throw const FormatException('Kategori tidak ditemukan.');
+  }
+
+  Future<void> restoreCategory(int id) async {
+    await database.transaction((txn) async {
+      final rows = await txn.query(
+        'assessment_category',
+        where: 'id = ? AND archived_at IS NOT NULL',
+        whereArgs: [id],
+      );
+      if (rows.isEmpty) {
+        throw const FormatException('Kategori tidak ada di arsip.');
+      }
+      final conflict = await txn.rawQuery(
+        'SELECT id FROM assessment_category WHERE archived_at IS NULL AND lower(trim(name)) = lower(trim(?)) AND id != ? LIMIT 1',
+        [rows.single['name'], id],
+      );
+      if (conflict.isNotEmpty) {
+        throw const FormatException(
+          'Nama ini sudah digunakan kategori aktif. Ubah nama kategori aktif terlebih dahulu, lalu pulihkan arsip.',
+        );
+      }
+      await txn.update(
+        'assessment_category',
+        {'archived_at': null, 'updated_at': _now},
+        where: 'id = ?',
+        whereArgs: [id],
+      );
+    });
   }
 
   Future<int> createAssessment({

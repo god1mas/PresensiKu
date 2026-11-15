@@ -16,6 +16,7 @@ import '../features/reports/presentation/report_screens.dart';
 import '../features/settings/presentation/backup_screen.dart';
 import '../features/settings/presentation/period_settings_screen.dart';
 import 'phase2_tabs.dart';
+import 'feature_selection_screens.dart';
 
 final appRouterProvider = Provider<GoRouter>((ref) {
   final router = GoRouter(
@@ -49,6 +50,20 @@ final appRouterProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: '/laporan',
         builder: (context, state) => const ReportScreen(),
+      ),
+      GoRoute(
+        path: '/laporan/pilih',
+        builder: (context, state) =>
+            const FeatureSelectionScreen(reports: true),
+      ),
+      GoRoute(
+        path: '/laporan/presensi',
+        builder: (context, state) => const ReportScreen(),
+      ),
+      GoRoute(
+        path: '/laporan/penilaian',
+        builder: (context, state) =>
+            const GradingDestinationScreen(history: false),
       ),
       GoRoute(
         path: '/laporan/ekspor',
@@ -228,8 +243,18 @@ final appRouterProvider = Provider<GoRouter>((ref) {
           ),
           GoRoute(
             path: '/riwayat',
-            builder: (context, state) => const HistoryScreen(),
+            builder: (context, state) =>
+                const FeatureSelectionScreen(reports: false),
             routes: [
+              GoRoute(
+                path: 'presensi',
+                builder: (context, state) => const HistoryScreen(),
+              ),
+              GoRoute(
+                path: 'penilaian',
+                builder: (context, state) =>
+                    const GradingDestinationScreen(history: true),
+              ),
               GoRoute(
                 path: ':id',
                 builder: (context, state) => HistoryDetailScreen(

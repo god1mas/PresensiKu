@@ -318,7 +318,7 @@ class SettingsTab extends ConsumerWidget {
                     leading: const Icon(Icons.summarize_outlined),
                     title: const Text('Rekap dan laporan'),
                     trailing: const Icon(Icons.chevron_right),
-                    onTap: () => context.push('/laporan'),
+                    onTap: () => context.push('/laporan/pilih'),
                   ),
                   const SizedBox(height: AppSpace.lg),
                   Text(

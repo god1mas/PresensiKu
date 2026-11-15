@@ -38,7 +38,7 @@ class _HistoryScreenState extends ConsumerState<HistoryScreen> {
         toolbarHeight: 90,
         actions: [
           IconButton(
-            onPressed: () => context.push('/laporan'),
+            onPressed: () => context.push('/laporan/pilih'),
             tooltip: 'Rekap dan laporan',
             icon: const Icon(Icons.summarize_outlined),
           ),
@@ -70,54 +70,61 @@ class _HistoryScreenState extends ConsumerState<HistoryScreen> {
             ),
           ),
           const SizedBox(height: AppSpace.base),
-          SizedBox(
-            height: 48,
-            child: ListView(
-              scrollDirection: Axis.horizontal,
-              padding: const EdgeInsets.symmetric(horizontal: AppSpace.lg),
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: AppSpace.lg),
+            child: Wrap(
+              spacing: AppSpace.base,
+              runSpacing: AppSpace.base,
+              crossAxisAlignment: WrapCrossAlignment.center,
               children: [
-                FutureBuilder<List<HistoryOption>>(
-                  future: repository.classOptions(),
-                  builder: (context, snapshot) => DropdownButton<int?>(
-                    value: classId,
-                    hint: const Text('Semua kelas'),
-                    items: [
-                      const DropdownMenuItem<int?>(
-                        value: null,
-                        child: Text('Semua kelas'),
-                      ),
-                      ...?snapshot.data?.map(
-                        (option) => DropdownMenuItem<int?>(
-                          value: option.id,
-                          child: Text(option.label),
+                SizedBox(
+                  width: 140,
+                  child: FutureBuilder<List<HistoryOption>>(
+                    future: repository.classOptions(),
+                    builder: (context, snapshot) => DropdownButton<int?>(
+                      isExpanded: true,
+                      value: classId,
+                      hint: const Text('Semua kelas'),
+                      items: [
+                        const DropdownMenuItem<int?>(
+                          value: null,
+                          child: Text('Semua kelas'),
                         ),
-                      ),
-                    ],
-                    onChanged: (value) => setState(() => classId = value),
+                        ...?snapshot.data?.map(
+                          (option) => DropdownMenuItem<int?>(
+                            value: option.id,
+                            child: Text(option.label),
+                          ),
+                        ),
+                      ],
+                      onChanged: (value) => setState(() => classId = value),
+                    ),
                   ),
                 ),
-                const SizedBox(width: AppSpace.base),
-                FutureBuilder<List<HistoryOption>>(
-                  future: repository.subjectOptions(),
-                  builder: (context, snapshot) => DropdownButton<int?>(
-                    value: subjectId,
-                    hint: const Text('Semua mapel'),
-                    items: [
-                      const DropdownMenuItem<int?>(
-                        value: null,
-                        child: Text('Semua mapel'),
-                      ),
-                      ...?snapshot.data?.map(
-                        (option) => DropdownMenuItem<int?>(
-                          value: option.id,
-                          child: Text(option.label),
+                SizedBox(
+                  width: 140,
+                  child: FutureBuilder<List<HistoryOption>>(
+                    future: repository.subjectOptions(),
+                    builder: (context, snapshot) => DropdownButton<int?>(
+                      isExpanded: true,
+                      value: subjectId,
+                      hint: const Text('Semua mapel'),
+                      items: [
+                        const DropdownMenuItem<int?>(
+                          value: null,
+                          child: Text('Semua mapel'),
                         ),
-                      ),
-                    ],
-                    onChanged: (value) => setState(() => subjectId = value),
+                        ...?snapshot.data?.map(
+                          (option) => DropdownMenuItem<int?>(
+                            value: option.id,
+                            child: Text(option.label),
+                          ),
+                        ),
+                      ],
+                      onChanged: (value) => setState(() => subjectId = value),
+                    ),
                   ),
                 ),
-                const SizedBox(width: AppSpace.base),
                 TextButton.icon(
                   onPressed: () async {
                     final picked = await showDateRangePicker(

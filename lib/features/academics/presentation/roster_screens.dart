@@ -416,6 +416,45 @@ class SubjectScreen extends ConsumerStatefulWidget {
 
 class _SubjectScreenState extends ConsumerState<SubjectScreen> {
   int revision = 0;
+  bool showingArchive = false;
+
+  Future<void> restore(Subject subject) async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        title: const Text('Pulihkan mata pelajaran?'),
+        content: Text(
+          '${subject.name} dan relasi kelas yang masih berlaku akan diaktifkan kembali.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(dialogContext, false),
+            child: const Text('Batal'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.pop(dialogContext, true),
+            child: const Text('Pulihkan'),
+          ),
+        ],
+      ),
+    );
+    if (confirmed != true) return;
+    try {
+      await ref.read(rosterRepositoryProvider).restoreSubject(subject.id);
+      ref.invalidate(dashboardSummaryProvider);
+      if (mounted) {
+        setState(() => revision++);
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Mata pelajaran dipulihkan.')),
+        );
+      }
+    } catch (error) {
+      if (mounted) {
+        ScaffoldMessenger.of(context)
+            .showSnackBar(SnackBar(content: Text(_message(error))));
+      }
+    }
+  }
 
   Future<void> edit([Subject? subject]) async {
     var name = subject?.name ?? '';
@@ -476,7 +515,9 @@ class _SubjectScreenState extends ConsumerState<SubjectScreen> {
     appBar: AppBar(title: const Text('Mata pelajaran')),
     body: FutureBuilder<List<Subject>>(
       key: ValueKey(revision),
-      future: ref.watch(rosterRepositoryProvider).subjects(),
+      future: ref
+          .watch(rosterRepositoryProvider)
+          .subjects(includeArchived: true),
       builder: (context, snapshot) {
         if (snapshot.hasError) {
           return const Center(
@@ -486,7 +527,13 @@ class _SubjectScreenState extends ConsumerState<SubjectScreen> {
         if (!snapshot.hasData) {
           return const Center(child: CircularProgressIndicator());
         }
-        final subjects = snapshot.data!;
+        final subjects = snapshot.data!
+            .where(
+              (item) => showingArchive
+                  ? item.archivedAt != null
+                  : item.archivedAt == null,
+            )
+            .toList();
         return ListView(
           padding: const EdgeInsets.all(AppSpace.lg),
           children: [
@@ -512,35 +559,60 @@ class _SubjectScreenState extends ConsumerState<SubjectScreen> {
               ),
             ),
             const SizedBox(height: AppSpace.xl),
+            SegmentedButton<bool>(
+              segments: const [
+                ButtonSegment(value: false, label: Text('Aktif')),
+                ButtonSegment(value: true, label: Text('Arsip')),
+              ],
+              selected: {showingArchive},
+              onSelectionChanged: (value) =>
+                  setState(() => showingArchive = value.first),
+            ),
+            const SizedBox(height: AppSpace.lg),
             Text(
-              'Daftar pelajaran',
+              showingArchive ? 'Mata pelajaran diarsipkan' : 'Daftar pelajaran',
               style: Theme.of(context).textTheme.titleLarge,
             ),
             const SizedBox(height: AppSpace.base),
-            if (subjects.isEmpty) const Text('Belum ada mata pelajaran'),
+            if (subjects.isEmpty)
+              Text(
+                showingArchive
+                    ? 'Arsip mata pelajaran kosong'
+                    : 'Belum ada mata pelajaran',
+              ),
             for (var index = 0; index < subjects.length; index++)
               Card(
                 child: ListTile(
                   leading: CircleAvatar(
-                    backgroundColor: AppColors.lavender,
+                    backgroundColor: showingArchive
+                        ? AppColors.line
+                        : AppColors.lavender,
                     child: Text('${index + 1}'.padLeft(2, '0')),
                   ),
                   title: Text(subjects[index].name),
-                  trailing: const Icon(Icons.chevron_right),
-                  onTap: () => edit(subjects[index]),
+                  subtitle: showingArchive ? const Text('Diarsipkan') : null,
+                  trailing: showingArchive
+                      ? TextButton(
+                          onPressed: () => restore(subjects[index]),
+                          child: const Text('Pulihkan'),
+                        )
+                      : const Icon(Icons.chevron_right),
+                  onTap: showingArchive ? null : () => edit(subjects[index]),
                 ),
               ),
           ],
         );
       },
     ),
-    bottomNavigationBar: Padding(
-      padding: const EdgeInsets.all(AppSpace.lg),
-      child: FilledButton(
-        onPressed: edit,
-        child: const Text('+ Tambah mata pelajaran'),
-      ),
-    ),
+    bottomNavigationBar: showingArchive
+        ? null
+        : Padding(
+            padding: const EdgeInsets.all(AppSpace.lg),
+            child: FilledButton(
+              onPressed: edit,
+              child: const Text('+ Tambah mata pelajaran'),
+            ),
+          ),
   );
 }
 

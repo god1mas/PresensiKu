@@ -100,6 +100,10 @@ void main() {
       () => Future<void>.delayed(const Duration(milliseconds: 100)),
     );
     await tester.pumpAndSettle();
+    expect(find.text('Pilih Jenis Laporan'), findsOneWidget);
+    expect(find.text('Rekap Penilaian'), findsOneWidget);
+    await tester.tap(find.text('Rekap Presensi'));
+    await tester.pumpAndSettle();
     expect(find.text('Rekap absensi'), findsOneWidget);
     expect(find.text('100%'), findsWidgets);
     expect(find.text('Ahmad'), findsOneWidget);

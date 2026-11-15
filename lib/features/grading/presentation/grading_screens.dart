@@ -1417,6 +1417,48 @@ class CategoryManagementScreen extends ConsumerStatefulWidget {
 class _CategoryManagementScreenState
     extends ConsumerState<CategoryManagementScreen> {
   int revision = 0;
+  bool showingArchive = false;
+
+  Future<void> _restore(Map<String, Object?> category) async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        title: const Text('Pulihkan kategori?'),
+        content: Text(
+          '${category['name']} akan aktif kembali dengan nilai dan bobot yang sudah tersimpan.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(dialogContext, false),
+            child: const Text('Batal'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.pop(dialogContext, true),
+            child: const Text('Pulihkan'),
+          ),
+        ],
+      ),
+    );
+    if (confirmed != true) return;
+    try {
+      await ref
+          .read(gradingRepositoryProvider)
+          .restoreCategory(category['id'] as int);
+      if (mounted) {
+        setState(() => revision++);
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text(
+              'Kategori dipulihkan. Periksa total bobot sebelum menyimpan perubahan.',
+            ),
+          ),
+        );
+      }
+    } catch (error) {
+      if (mounted) _showError(context, error);
+    }
+  }
+
   Future<void> _edit({Map<String, Object?>? category}) async {
     final controller = TextEditingController(
       text: category?['name'] as String? ?? '',
@@ -1497,55 +1539,100 @@ class _CategoryManagementScreenState
     BuildContext context,
   ) => FutureBuilder<List<Map<String, Object?>>>(
     key: ValueKey(revision),
-    future: ref.read(gradingRepositoryProvider).categories(),
+    future: ref
+        .read(gradingRepositoryProvider)
+        .categories(includeArchived: true),
     builder: (context, snapshot) => _GradeScaffold(
       title: 'Kategori Penilaian',
       subtitle: 'Kelola kategori penilaian',
-      action: FilledButton(
-        onPressed: () => context
-            .push(
-              '${gradingPath(widget.classId, widget.subjectId)}/kategori/tambah',
-            )
-            .then((_) {
-              if (mounted) setState(() => revision++);
-            }),
-        child: const Text('+ Tambah Kategori'),
-      ),
+      action: showingArchive
+          ? null
+          : FilledButton(
+              onPressed: () => context
+                  .push(
+                    '${gradingPath(widget.classId, widget.subjectId)}/kategori/tambah',
+                  )
+                  .then((_) {
+                    if (mounted) setState(() => revision++);
+                  }),
+              child: const Text('+ Tambah Kategori'),
+            ),
       children: [
         const _GradeCard(
           color: AppColors.iceBlue,
           child: Text('Kategori Penilaian\nKategori default dan buatan guru'),
         ),
+        SegmentedButton<bool>(
+          segments: const [
+            ButtonSegment(value: false, label: Text('Aktif')),
+            ButtonSegment(value: true, label: Text('Arsip')),
+          ],
+          selected: {showingArchive},
+          onSelectionChanged: (value) =>
+              setState(() => showingArchive = value.first),
+        ),
         _GradeCard(
           child: Column(
             children: [
-              for (final category in snapshot.data ?? <Map<String, Object?>>[])
+              if (snapshot.hasError) const Text('Kategori belum dapat dimuat.'),
+              if (snapshot.hasData &&
+                  !(snapshot.data!).any(
+                    (row) => showingArchive
+                        ? row['archived_at'] != null
+                        : row['archived_at'] == null,
+                  ))
+                Text(
+                  showingArchive
+                      ? 'Arsip kategori kosong.'
+                      : 'Belum ada kategori aktif.',
+                ),
+              for (final category
+                  in (snapshot.data ?? <Map<String, Object?>>[]).where(
+                    (row) => showingArchive
+                        ? row['archived_at'] != null
+                        : row['archived_at'] == null,
+                  ))
                 ListTile(
                   contentPadding: EdgeInsets.zero,
                   leading: CircleAvatar(
-                    backgroundColor: AppColors.yellow,
+                    backgroundColor: showingArchive
+                        ? AppColors.line
+                        : AppColors.yellow,
                     child: Text((category['name'] as String).substring(0, 1)),
                   ),
                   title: Text(category['name'] as String),
-                  trailing: PopupMenuButton<String>(
-                    onSelected: (value) => value == 'edit'
-                        ? _edit(category: category)
-                        : _archive(category),
-                    itemBuilder: (context) => const [
-                      PopupMenuItem(value: 'edit', child: Text('Ubah nama')),
-                      PopupMenuItem(value: 'archive', child: Text('Arsipkan')),
-                    ],
-                  ),
+                  subtitle: showingArchive ? const Text('Diarsipkan') : null,
+                  trailing: showingArchive
+                      ? TextButton(
+                          onPressed: () => _restore(category),
+                          child: const Text('Pulihkan'),
+                        )
+                      : PopupMenuButton<String>(
+                          onSelected: (value) => value == 'edit'
+                              ? _edit(category: category)
+                              : _archive(category),
+                          itemBuilder: (context) => const [
+                            PopupMenuItem(
+                              value: 'edit',
+                              child: Text('Ubah nama'),
+                            ),
+                            PopupMenuItem(
+                              value: 'archive',
+                              child: Text('Arsipkan'),
+                            ),
+                          ],
+                        ),
                 ),
             ],
           ),
         ),
-        const _GradeCard(
-          color: AppColors.lavender,
-          child: Text(
-            'Kategori kustom seperti Praktik, Proyek, dan Presentasi dapat ditambahkan. Kategori berisi nilai lebih aman diarsipkan.',
+        if (!showingArchive)
+          const _GradeCard(
+            color: AppColors.lavender,
+            child: Text(
+              'Kategori kustom seperti Praktik, Proyek, dan Presentasi dapat ditambahkan. Kategori berisi nilai lebih aman diarsipkan.',
+            ),
           ),
-        ),
       ],
     ),
   );

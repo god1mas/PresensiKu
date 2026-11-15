@@ -24,9 +24,10 @@ class Student {
 }
 
 class Subject {
-  const Subject({required this.id, required this.name});
+  const Subject({required this.id, required this.name, this.archivedAt});
   final int id;
   final String name;
+  final String? archivedAt;
 }
 
 class RosterRepository {
@@ -124,7 +125,11 @@ class RosterRepository {
     );
     return rows
         .map(
-          (row) => Subject(id: row['id'] as int, name: row['name'] as String),
+          (row) => Subject(
+            id: row['id'] as int,
+            name: row['name'] as String,
+            archivedAt: row['archived_at'] as String?,
+          ),
         )
         .toList();
   }
@@ -190,6 +195,49 @@ class RosterRepository {
         {'archived_at': now},
         where: 'subject_id = ? AND archived_at IS NULL',
         whereArgs: [id],
+      );
+    });
+  }
+
+  Future<void> restoreSubject(int id) async {
+    await database.transaction((txn) async {
+      final rows = await txn.query(
+        'subject',
+        where: 'id = ? AND archived_at IS NOT NULL',
+        whereArgs: [id],
+      );
+      if (rows.isEmpty) {
+        throw const FormatException('Mata pelajaran tidak ada di arsip.');
+      }
+      final subject = rows.single;
+      final conflict = await txn.rawQuery(
+        'SELECT id FROM subject WHERE archived_at IS NULL AND lower(trim(name)) = lower(trim(?)) AND id != ? LIMIT 1',
+        [subject['name'], id],
+      );
+      if (conflict.isNotEmpty) {
+        throw const FormatException(
+          'Nama ini sudah digunakan mata pelajaran aktif. Ubah nama yang aktif terlebih dahulu, lalu pulihkan arsip.',
+        );
+      }
+      final now = DateTime.now().toIso8601String();
+      await txn.update(
+        'subject',
+        {'archived_at': null, 'updated_at': now},
+        where: 'id = ?',
+        whereArgs: [id],
+      );
+      // Only associations archived in the same operation are recovered.
+      // Older unlinks keep their distinct archive timestamps.
+      await txn.rawUpdate(
+        '''
+        UPDATE class_subject SET archived_at = NULL, updated_at = ?
+        WHERE subject_id = ? AND archived_at = ?
+          AND class_id IN (SELECT id FROM school_class WHERE archived_at IS NULL)
+          AND NOT EXISTS (SELECT 1 FROM class_subject active
+            WHERE active.class_id = class_subject.class_id AND active.subject_id = ?
+              AND active.archived_at IS NULL)
+      ''',
+        [now, id, subject['archived_at'], id],
       );
     });
   }

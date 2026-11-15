@@ -65,6 +65,12 @@ void main() {
       () => Future<void>.delayed(const Duration(milliseconds: 100)),
     );
     await tester.pumpAndSettle();
+    expect(find.text('Pilih Jenis Riwayat'), findsOneWidget);
+    await tester.tap(find.text('Riwayat Presensi'));
+    await tester.runAsync(
+      () => Future<void>.delayed(const Duration(milliseconds: 100)),
+    );
+    await tester.pumpAndSettle();
     expect(find.text('Riwayat kosong'), findsOneWidget);
 
     await tester.tap(find.text('Pengaturan').last);
