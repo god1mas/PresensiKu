@@ -44,7 +44,7 @@ Backups support schemas 1–3. Profiles contain no education level.
 3. Class archive recovery: PASS — original ID/color/history retained, known cascade children restored, prior archives/unlinks retained, duplicate names roll back, backup/reopen verified, 320 px UI test and clean analyzer.
 4. Grading history filters and responsive UI: PASS — title search, compact period/class/subject/date filters, visible active state/reset, historical detail navigation, 320/393 px widget tests, clean analyzer.
 5. Full regression: PASS — `dart format lib test` completed; `flutter analyze --no-pub` found no issues; full `flutter test --no-pub` passed 61/61 tests. Regression coverage includes populated migrations and backups, semester switching and history, archive restoration, attendance, grading, four-sheet grade XLSX, two-sheet attendance XLSX, and a 40-student workflow. University attendance sheets retain NIM as text in both detail and summary. A class empty-state overflow found by the full suite was corrected.
-6. APK, signing comparison, release documentation: NOT STARTED.
+6. APK, signing comparison, release documentation: PASS for local QA artifact — `flutter build apk --release --no-pub` succeeded for 1.4.0+5. `aapt` confirmed package, version, KelasKu label/icon, and API levels. `apksigner` verified v2 signing with the same existing debug certificate as preserved 1.3.0+4; `zipalign` passed. APK SHA-256 and size are recorded in `RELEASE_NOTES_1.4.0.md`. Android device acceptance remains pending.
 
 Device QA must be reported separately from automated verification. No GitHub
 push or production signing is part of this task.

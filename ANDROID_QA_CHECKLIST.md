@@ -1,6 +1,6 @@
 # Android manual QA
 
-Status: PENDING for KelasKu 1.3.0+4. No connected Android device was available during APK verification. Automated widget tests use desktop SQLite and test adapters for file delivery; they do not verify Android system pickers or sharing.
+Status: PENDING for KelasKu 1.4.0+5. Automated widget tests use desktop SQLite and test adapters for file delivery; they do not verify Android system pickers or sharing.
 
 Record the device model, Android version, APK SHA-256, result, and any screenshot or error for each check. Use disposable sample data for restore checks.
 
@@ -53,3 +53,15 @@ SQLite V1/V2→V3 migrations, V1/V2/V3 backup formats, and the 40-student flow a
 - [ ] Open Pengaturan → Rekap dan laporan and choose both Presensi and Penilaian. Open bottom Riwayat and choose both histories. Verify class/subject/period/date/search filters, details, corrections, and Android Back to each selection screen.
 - [ ] Check attendance-history filters at narrow width or enlarged display text; confirm date control and dropdowns remain fully reachable without clipping or overflow.
 - [ ] Repeat attendance, grading, archive recovery, Excel export, backup/restore, and app restart in airplane mode. Compare rendered screens with the supplied design references.
+
+## KelasKu 1.4.0+5 academic redesign acceptance (PENDING on device)
+
+- [ ] Before updating, export a `.pkbackup` and copy it off the phone. Compare the installed app's signing certificate with the QA APK fingerprint in `RELEASE_NOTES_1.4.0.md`. Install over the existing app without uninstalling; stop if Android rejects the update.
+- [ ] On an existing school profile, confirm the education level can be completed without losing the teacher name, institution, classes, or history. Confirm KelasKu branding and the `by god1mas` signature.
+- [ ] In a school year, create a Ganjil class with students, subjects, and a custom color. Switch to Genap and confirm the same class ID, roster, subjects, and color appear. Start Meeting 1 in both semesters and confirm separate attendance, assessments, grades, and weights. Switch back repeatedly and restart the app; records must stay in their original semesters.
+- [ ] Create another academic year and confirm its class configuration is separate. Use the period selector to inspect historical records without activating that period; use the explicit activation action and confirm dashboard counts follow the active period.
+- [ ] In a university profile, create classes/courses/enrollment in Ganjil. Switch to Genap and confirm no automatic enrollment copy. Enter a NIM with leading zeros, then verify it remains intact in the app, attendance XLSX detail/summary, and four-sheet grade XLSX after restart.
+- [ ] Archive a class, find it under Arsip, and restore it. Confirm original class ID, color, students, subject links, attendance, and grades return. Confirm earlier manually archived students or removed subject links stay archived. Test a same-name conflict and verify no partial restoration.
+- [ ] Open Riwayat Penilaian and filter by search text, class, subject, academic period, and date. Check filter chips/reset and detail navigation on a narrow screen and with large text. Check Riwayat Presensi filters too.
+- [ ] Save/share attendance and grading workbooks through Android picker/share sheets. Confirm the four grading sheets including Matriks Nilai, and verify legacy V1/V2/V3 backup restore in disposable sample data.
+- [ ] Repeat semester switching, attendance draft recovery, Excel export, backup/restore, and app restart in airplane mode. Check all revised screens for overflow and scroll reachability against the existing Figma references.
