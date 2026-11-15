@@ -8,11 +8,13 @@ class ClassShortcut {
     required this.id,
     required this.name,
     required this.studentCount,
+    required this.colorIndex,
   });
 
   final int id;
   final String name;
   final int studentCount;
+  final int colorIndex;
 }
 
 class RecentSession {
@@ -82,7 +84,7 @@ class DashboardRepository {
       ),
     ]);
     final classRows = await database.rawQuery(
-      '''SELECT c.id, c.name, count(s.id) AS student_count
+      '''SELECT c.id, c.name, c.color_index, count(s.id) AS student_count
          FROM school_class c
          LEFT JOIN student s ON s.class_id = c.id AND s.archived_at IS NULL
          JOIN academic_period p ON p.id = c.period_id
@@ -109,6 +111,7 @@ class DashboardRepository {
               id: row['id'] as int,
               name: row['name'] as String,
               studentCount: row['student_count'] as int,
+              colorIndex: row['color_index'] as int,
             ),
           )
           .toList(),

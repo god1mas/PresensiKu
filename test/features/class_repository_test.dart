@@ -31,6 +31,8 @@ void main() {
     );
     await repository.createClass(periodId: first, name: 'VII A');
     await repository.createClass(periodId: second, name: 'VII B');
+    expect((await repository.classes(first)).single.colorIndex, 0);
+    expect((await repository.classes(second)).single.colorIndex, 1);
     expect((await repository.classes(first)).single.name, 'VII A');
     expect((await repository.classes(second)).single.name, 'VII B');
     expect((await DashboardRepository(db.database).load()).classCount, 1);
@@ -72,6 +74,8 @@ void main() {
         semester: 'ganjil',
       );
       final id = await first.createClass(periodId: period, name: ' VII A ');
+      await first.updateClass(id, 'VII A', 5);
+      expect((await first.classById(id))!.colorIndex, 5);
       expect((await first.classes(period, search: 'vii')).single.id, id);
       await first.renameClass(id, 'VII B');
       expect(
@@ -91,6 +95,7 @@ void main() {
       addTearDown(secondDb.close);
       final second = ClassRepository(secondDb.database);
       expect((await second.classes(period)).single.name, 'VII B');
+      expect((await second.classes(period)).single.colorIndex, 5);
       await second.archiveClass(id);
       expect(await second.classes(period), isEmpty);
       await second.createClass(periodId: period, name: 'VII B');

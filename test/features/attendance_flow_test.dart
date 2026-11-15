@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:go_router/go_router.dart';
 import 'package:intl/date_symbol_data_local.dart';
 import 'package:presensiku/app/app.dart';
 import 'package:presensiku/core/database/app_database.dart';
@@ -84,6 +85,41 @@ void main() {
     expect(find.text('Simpan absensi · 2 belum diisi'), findsOneWidget);
 
     await tester.tap(find.text('H Hadir').first);
+    await tester.runAsync(
+      () => Future<void>.delayed(const Duration(milliseconds: 100)),
+    );
+    await tester.pumpAndSettle();
+    expect(find.text('1 dari 2 siswa'), findsOneWidget);
+    final sessionId = await tester.runAsync(
+      () async =>
+          (await app.database.query('attendance_session')).single['id'] as int,
+    );
+    GoRouter.of(tester.element(find.text('1 dari 2 siswa')))
+        .go('/absensi/$sessionId');
+    await tester.pumpAndSettle();
+    await tester.tap(find.byTooltip('Kembali'));
+    await tester.pumpAndSettle();
+    expect(find.text('Mulai absensi'), findsOneWidget);
+    expect(find.textContaining('VII A'), findsWidgets);
+    await tester.tap(find.textContaining('Lanjutkan absensi'));
+    await tester.runAsync(
+      () => Future<void>.delayed(const Duration(milliseconds: 100)),
+    );
+    await tester.pumpAndSettle();
+    expect(find.text('1 dari 2 siswa'), findsOneWidget);
+    await tester.tap(find.byTooltip('Kembali'));
+    await tester.pumpAndSettle();
+    expect(find.text('Mulai absensi'), findsOneWidget);
+    await tester.tap(find.textContaining('Lanjutkan absensi'));
+    await tester.runAsync(
+      () => Future<void>.delayed(const Duration(milliseconds: 100)),
+    );
+    await tester.pumpAndSettle();
+    expect(find.text('1 dari 2 siswa'), findsOneWidget);
+    await tester.binding.handlePopRoute();
+    await tester.pumpAndSettle();
+    expect(find.text('Mulai absensi'), findsOneWidget);
+    await tester.tap(find.textContaining('Lanjutkan absensi'));
     await tester.runAsync(
       () => Future<void>.delayed(const Duration(milliseconds: 100)),
     );
@@ -192,6 +228,11 @@ void main() {
       scrollable: find.byType(Scrollable).last,
     );
     expect(find.text('Siswa 40'), findsOneWidget);
+    expect(tester.takeException(), isNull);
+    await tester.binding.setSurfaceSize(const Size(393, 852));
+    await tester.pumpAndSettle();
+    expect(find.text('Siswa 40'), findsOneWidget);
+    expect(tester.takeException(), isNull);
     expect(find.text('Simpan absensi · 40 belum diisi'), findsOneWidget);
     await tester.pumpWidget(const SizedBox.shrink());
     await tester.runAsync(app.close);

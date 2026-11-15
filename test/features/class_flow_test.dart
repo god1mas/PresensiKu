@@ -4,6 +4,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:intl/date_symbol_data_local.dart';
 import 'package:presensiku/app/app.dart';
 import 'package:presensiku/core/database/app_database.dart';
+import 'package:presensiku/features/academics/data/class_repository.dart';
 import 'package:presensiku/features/onboarding/data/profile_repository.dart';
 import 'package:sqflite_common_ffi/sqflite_ffi.dart';
 
@@ -55,6 +56,9 @@ void main() {
     await tester.tap(find.textContaining('Tambah kelas').last);
     await tester.pumpAndSettle();
     await tester.enterText(find.byType(TextField).last, 'VII A');
+    await tester.tap(find.byTooltip('Hijau'));
+    await tester.pumpAndSettle();
+    expect(find.textContaining('Pratinjau · Hijau'), findsOneWidget);
     await tester.tap(find.text('Simpan'));
     await tester.runAsync(
       () => Future<void>.delayed(const Duration(milliseconds: 100)),
@@ -162,15 +166,24 @@ void main() {
 
     await tester.tap(find.byIcon(Icons.more_vert));
     await tester.pumpAndSettle();
-    await tester.tap(find.text('Ubah nama kelas'));
+    await tester.tap(find.text('Ubah kelas dan warna'));
     await tester.pumpAndSettle();
     await tester.enterText(find.byType(TextFormField).last, 'VII B');
+    await tester.tap(find.byTooltip('Ungu'));
+    await tester.pumpAndSettle();
     await tester.tap(find.text('Simpan'));
     await tester.runAsync(
       () => Future<void>.delayed(const Duration(milliseconds: 100)),
     );
     await tester.pumpAndSettle();
     expect(find.text('VII B'), findsOneWidget);
+    final colorIndex = await tester.runAsync(() async {
+      final period = (await ClassRepository(db.database).periods()).first;
+      return (await ClassRepository(db.database).classes(period.id))
+          .single
+          .colorIndex;
+    });
+    expect(colorIndex, 2);
 
     await tester.tap(find.byIcon(Icons.more_vert));
     await tester.pumpAndSettle();

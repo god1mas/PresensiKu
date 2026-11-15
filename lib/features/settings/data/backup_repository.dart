@@ -73,7 +73,9 @@ class BackupRepository {
         throw const FormatException('Format file cadangan tidak dikenal.');
       }
       final version = decoded['schemaVersion'];
-      if (version != 1 && version != AppDatabase.schemaVersion) {
+      if (version != 1 &&
+          version != 2 &&
+          version != AppDatabase.schemaVersion) {
         throw const FormatException('Versi database cadangan tidak cocok.');
       }
       final expectedTables = version == 1 ? legacyTables : tables;
@@ -136,6 +138,10 @@ class BackupRepository {
           }
           await txn.insert(table, row);
         }
+      }
+      if (backup.data['school_class']!.isNotEmpty &&
+          !backup.data['school_class']!.first.containsKey('color_index')) {
+        await txn.execute('UPDATE school_class SET color_index = (id - 1) % 9');
       }
       if (backup.data['assessment_category']!.isEmpty) {
         final now = DateTime.now().toUtc().toIso8601String();

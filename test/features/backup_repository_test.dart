@@ -16,6 +16,55 @@ void main() {
   sqfliteFfiInit();
 
   test(
+    'class colors survive backup and old V2 backup gets stable colors',
+    () async {
+      final source = await AppDatabase.open(
+        factory: databaseFactoryFfi,
+        path: inMemoryDatabasePath,
+      );
+      addTearDown(source.close);
+      await ProfileRepository(source.database).save(name: 'Guru');
+      final classes = ClassRepository(source.database);
+      final period = await classes.createPeriod(
+        yearLabel: '2026/2027',
+        semester: 'ganjil',
+      );
+      final id = await classes.createClass(
+        periodId: period,
+        name: 'VII A',
+        colorIndex: 5,
+      );
+      final current = await BackupRepository(source.database).create();
+      final target = await AppDatabase.open(
+        factory: databaseFactoryFfi,
+        path: inMemoryDatabasePath,
+      );
+      addTearDown(target.close);
+      await BackupRepository(target.database).restore(current);
+      expect(
+        (await ClassRepository(target.database).classById(id))!.colorIndex,
+        5,
+      );
+
+      final envelope = jsonDecode(utf8.decode(current)) as Map<String, dynamic>;
+      final data = envelope['data'] as Map<String, dynamic>;
+      for (final row in data['school_class'] as List) {
+        (row as Map<String, dynamic>).remove('color_index');
+      }
+      envelope['schemaVersion'] = 2;
+      envelope['sha256'] = sha256
+          .convert(utf8.encode(jsonEncode(data)))
+          .toString();
+      await BackupRepository(target.database)
+          .restore(Uint8List.fromList(utf8.encode(jsonEncode(envelope))));
+      expect(
+        (await ClassRepository(target.database).classById(id))!.colorIndex,
+        (id - 1) % 9,
+      );
+    },
+  );
+
+  test(
     'full backup restores all rows, relationships, and report values',
     () async {
       final source = await AppDatabase.open(

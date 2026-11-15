@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 
 import '../../../core/design/tokens.dart';
+import '../../../core/design/class_colors.dart';
 import '../../onboarding/data/profile_repository.dart';
 import '../data/dashboard_repository.dart';
 
@@ -193,16 +194,14 @@ class DashboardScreen extends ConsumerWidget {
                       width: 169,
                       padding: const EdgeInsets.all(AppSpace.md),
                       decoration: BoxDecoration(
-                        color: index.isEven
-                            ? AppColors.iceBlue
-                            : AppColors.lightGreen,
+                        color: classColor(item.colorIndex).tint,
                         borderRadius: BorderRadius.circular(AppRadius.card),
                       ),
                       child: Row(
                         children: [
-                          const Icon(
+                          Icon(
                             Icons.menu_book_outlined,
-                            color: AppColors.blue,
+                            color: classColor(item.colorIndex).accent,
                           ),
                           const SizedBox(width: AppSpace.sm),
                           Expanded(

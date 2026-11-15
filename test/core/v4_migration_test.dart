@@ -7,13 +7,36 @@ import 'package:sqflite_common_ffi/sqflite_ffi.dart';
 void main() {
   sqfliteFfiInit();
 
-  test('fresh schema 2 has grading tables and default categories', () async {
+  test('schema 2 adds a stable class color without changing rows', () async {
+    final directory = await Directory.systemTemp.createTemp('kelasku-color-');
+    addTearDown(() => directory.delete(recursive: true));
+    final path = '${directory.path}/old.db';
+    final old = await databaseFactoryFfi.openDatabase(path);
+    await old.execute(
+      'CREATE TABLE school_class (id INTEGER PRIMARY KEY, name TEXT NOT NULL)',
+    );
+    await old.insert('school_class', {'id': 4, 'name': 'VII A'});
+    await old.setVersion(2);
+    await old.close();
+
+    final upgraded = await AppDatabase.open(
+      factory: databaseFactoryFfi,
+      path: path,
+    );
+    addTearDown(upgraded.close);
+    expect(await upgraded.database.getVersion(), 3);
+    final row = (await upgraded.database.query('school_class')).single;
+    expect(row['name'], 'VII A');
+    expect(row['color_index'], 3);
+  });
+
+  test('fresh schema 3 has grading tables and class colors', () async {
     final app = await AppDatabase.open(
       factory: databaseFactoryFfi,
       path: inMemoryDatabasePath,
     );
     addTearDown(app.close);
-    expect(await app.database.getVersion(), 2);
+    expect(await app.database.getVersion(), 3);
     final names = (await app.database.rawQuery(
       "SELECT name FROM sqlite_master WHERE type='table'",
     )).map((row) => row['name']).toSet();
@@ -93,7 +116,7 @@ void main() {
     await old.close();
 
     final app = await AppDatabase.open(factory: databaseFactoryFfi, path: path);
-    expect(await app.database.getVersion(), 2);
+    expect(await app.database.getVersion(), 3);
     expect(
       (await app.database.query('attendance_record')).single['status'],
       'H',

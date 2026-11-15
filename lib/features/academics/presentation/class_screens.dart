@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../core/design/tokens.dart';
+import '../../../core/design/class_colors.dart';
 import '../../dashboard/data/dashboard_repository.dart';
 import '../data/class_repository.dart';
 import 'roster_screens.dart';
@@ -87,40 +88,61 @@ class _ClassListScreenState extends ConsumerState<ClassListScreen> {
 
   Future<void> addClass(int periodId) async {
     var name = '';
+    var colorIndex = await ref.read(classRepositoryProvider).nextColorIndex();
+    if (!mounted) return;
     final result = await showDialog<bool>(
       context: context,
-      builder: (dialogContext) => AlertDialog(
-        title: const Text('Tambah kelas'),
-        content: TextField(
-          onChanged: (value) => name = value,
-          autofocus: true,
-          decoration: const InputDecoration(
-            labelText: 'Nama kelas',
-            hintText: 'VII A',
+      builder: (dialogContext) => StatefulBuilder(
+        builder: (context, setDialogState) => AlertDialog(
+          title: const Text('Tambah kelas'),
+          content: SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                TextField(
+                  onChanged: (value) => name = value,
+                  autofocus: true,
+                  decoration: const InputDecoration(
+                    labelText: 'Nama kelas',
+                    hintText: 'VII A',
+                  ),
+                ),
+                const SizedBox(height: AppSpace.lg),
+                ClassColorPicker(
+                  value: colorIndex,
+                  onChanged: (value) =>
+                      setDialogState(() => colorIndex = value),
+                ),
+              ],
+            ),
           ),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(dialogContext, false),
-            child: const Text('Batal'),
-          ),
-          FilledButton(
-            onPressed: () async {
-              try {
-                await ref
-                    .read(classRepositoryProvider)
-                    .createClass(periodId: periodId, name: name);
-                if (dialogContext.mounted) Navigator.pop(dialogContext, true);
-              } catch (error) {
-                if (dialogContext.mounted) {
-                  ScaffoldMessenger.of(dialogContext)
-                      .showSnackBar(SnackBar(content: Text(_message(error))));
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(dialogContext, false),
+              child: const Text('Batal'),
+            ),
+            FilledButton(
+              onPressed: () async {
+                try {
+                  await ref
+                      .read(classRepositoryProvider)
+                      .createClass(
+                        periodId: periodId,
+                        name: name,
+                        colorIndex: colorIndex,
+                      );
+                  if (dialogContext.mounted) Navigator.pop(dialogContext, true);
+                } catch (error) {
+                  if (dialogContext.mounted) {
+                    ScaffoldMessenger.of(dialogContext)
+                        .showSnackBar(SnackBar(content: Text(_message(error))));
+                  }
                 }
-              }
-            },
-            child: const Text('Simpan'),
-          ),
-        ],
+              },
+              child: const Text('Simpan'),
+            ),
+          ],
+        ),
       ),
     );
     if (result == true && mounted) refresh();
@@ -273,7 +295,13 @@ class _ClassListScreenState extends ConsumerState<ClassListScreen> {
                               height: 148,
                               padding: const EdgeInsets.all(AppSpace.lg),
                               decoration: BoxDecoration(
-                                color: AppColors.iceBlue,
+                                color: classColor(classes.first.colorIndex)
+                                    .tint,
+                                border: Border.all(
+                                  color: classColor(classes.first.colorIndex)
+                                      .accent
+                                      .withValues(alpha: 0.25),
+                                ),
                                 borderRadius: BorderRadius.circular(
                                   AppRadius.featured,
                                 ),
@@ -285,7 +313,12 @@ class _ClassListScreenState extends ConsumerState<ClassListScreen> {
                                     chosen.yearLabel,
                                     style: Theme.of(context)
                                         .textTheme
-                                        .labelMedium,
+                                        .labelMedium
+                                        ?.copyWith(
+                                          color: classColor(
+                                            classes.first.colorIndex,
+                                          ).accent,
+                                        ),
                                   ),
                                   const Spacer(),
                                   Text(
@@ -318,15 +351,21 @@ class _ClassListScreenState extends ConsumerState<ClassListScreen> {
                         const SizedBox(height: AppSpace.base),
                         for (final item in classes)
                           Card(
+                            color: classColor(item.colorIndex).tint,
                             child: ListTile(
                               leading: CircleAvatar(
-                                backgroundColor: AppColors.lavender,
+                                backgroundColor: classColor(item.colorIndex)
+                                    .accent,
                                 child: Text(
                                   item.name,
-                                  style: const TextStyle(fontSize: 11),
+                                  style: const TextStyle(
+                                    fontSize: 11,
+                                    color: Colors.white,
+                                  ),
                                 ),
                               ),
-                              title: Text('${item.studentCount} siswa'),
+                              title: Text(item.name),
+                              subtitle: Text('${item.studentCount} siswa'),
                               trailing: const Icon(Icons.chevron_right),
                               onTap: () => open(item),
                             ),
@@ -383,37 +422,53 @@ class _ClassDetailScreenState extends ConsumerState<ClassDetailScreen> {
 
   Future<void> rename(SchoolClass item) async {
     var name = item.name;
+    var colorIndex = item.colorIndex;
     final result = await showDialog<bool>(
       context: context,
-      builder: (dialogContext) => AlertDialog(
-        title: const Text('Ubah nama kelas'),
-        content: TextFormField(
-          initialValue: item.name,
-          onChanged: (value) => name = value,
-          decoration: const InputDecoration(labelText: 'Nama kelas'),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(dialogContext, false),
-            child: const Text('Batal'),
+      builder: (dialogContext) => StatefulBuilder(
+        builder: (context, setDialogState) => AlertDialog(
+          title: const Text('Ubah kelas'),
+          content: SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                TextFormField(
+                  initialValue: item.name,
+                  onChanged: (value) => name = value,
+                  decoration: const InputDecoration(labelText: 'Nama kelas'),
+                ),
+                const SizedBox(height: AppSpace.lg),
+                ClassColorPicker(
+                  value: colorIndex,
+                  onChanged: (value) =>
+                      setDialogState(() => colorIndex = value),
+                ),
+              ],
+            ),
           ),
-          FilledButton(
-            onPressed: () async {
-              try {
-                await ref
-                    .read(classRepositoryProvider)
-                    .renameClass(item.id, name);
-                if (dialogContext.mounted) Navigator.pop(dialogContext, true);
-              } catch (error) {
-                if (dialogContext.mounted) {
-                  ScaffoldMessenger.of(dialogContext)
-                      .showSnackBar(SnackBar(content: Text(_message(error))));
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(dialogContext, false),
+              child: const Text('Batal'),
+            ),
+            FilledButton(
+              onPressed: () async {
+                try {
+                  await ref
+                      .read(classRepositoryProvider)
+                      .updateClass(item.id, name, colorIndex);
+                  if (dialogContext.mounted) Navigator.pop(dialogContext, true);
+                } catch (error) {
+                  if (dialogContext.mounted) {
+                    ScaffoldMessenger.of(dialogContext)
+                        .showSnackBar(SnackBar(content: Text(_message(error))));
+                  }
                 }
-              }
-            },
-            child: const Text('Simpan'),
-          ),
-        ],
+              },
+              child: const Text('Simpan'),
+            ),
+          ],
+        ),
       ),
     );
     if (result == true && mounted) setState(() => revision++);
@@ -474,7 +529,7 @@ class _ClassDetailScreenState extends ConsumerState<ClassDetailScreen> {
                 itemBuilder: (context) => const [
                   PopupMenuItem(
                     value: 'rename',
-                    child: Text('Ubah nama kelas'),
+                    child: Text('Ubah kelas dan warna'),
                   ),
                   PopupMenuItem(
                     value: 'archive',
@@ -491,9 +546,37 @@ class _ClassDetailScreenState extends ConsumerState<ClassDetailScreen> {
             : ListView(
                 padding: const EdgeInsets.all(AppSpace.lg),
                 children: [
-                  Text(
-                    snapshot.data!.name,
-                    style: Theme.of(context).textTheme.headlineMedium,
+                  Container(
+                    padding: const EdgeInsets.all(AppSpace.base),
+                    decoration: BoxDecoration(
+                      color: classColor(snapshot.data!.colorIndex).tint,
+                      borderRadius: BorderRadius.circular(AppRadius.card),
+                      border: Border(
+                        left: BorderSide(
+                          color: classColor(snapshot.data!.colorIndex).accent,
+                          width: 4,
+                        ),
+                      ),
+                    ),
+                    child: Row(
+                      children: [
+                        CircleAvatar(
+                          backgroundColor: classColor(snapshot.data!.colorIndex)
+                              .accent,
+                          child: const Icon(
+                            Icons.school_outlined,
+                            color: Colors.white,
+                          ),
+                        ),
+                        const SizedBox(width: AppSpace.md),
+                        Expanded(
+                          child: Text(
+                            snapshot.data!.name,
+                            style: Theme.of(context).textTheme.headlineMedium,
+                          ),
+                        ),
+                      ],
+                    ),
                   ),
                   const SizedBox(height: AppSpace.xs),
                   Text(
@@ -551,6 +634,66 @@ class _ClassDetailScreenState extends ConsumerState<ClassDetailScreen> {
       ),
     );
   }
+}
+
+class ClassColorPicker extends StatelessWidget {
+  const ClassColorPicker({
+    super.key,
+    required this.value,
+    required this.onChanged,
+  });
+  final int value;
+  final ValueChanged<int> onChanged;
+
+  @override
+  Widget build(BuildContext context) => Column(
+    crossAxisAlignment: CrossAxisAlignment.start,
+    children: [
+      const Text('Warna kelas', style: TextStyle(fontWeight: FontWeight.w700)),
+      const SizedBox(height: AppSpace.sm),
+      Wrap(
+        spacing: 8,
+        runSpacing: 8,
+        children: [
+          for (var index = 0; index < classColors.length; index++)
+            Tooltip(
+              message: classColors[index].name,
+              child: Semantics(
+                label: 'Warna ${classColors[index].name}',
+                selected: value == index,
+                child: InkWell(
+                  onTap: () => onChanged(index),
+                  borderRadius: BorderRadius.circular(24),
+                  child: CircleAvatar(
+                    radius: 20,
+                    backgroundColor: classColors[index].accent,
+                    child: value == index
+                        ? const Icon(Icons.check, color: Colors.white)
+                        : null,
+                  ),
+                ),
+              ),
+            ),
+        ],
+      ),
+      const SizedBox(height: AppSpace.sm),
+      Container(
+        width: double.infinity,
+        padding: const EdgeInsets.all(AppSpace.md),
+        decoration: BoxDecoration(
+          color: classColor(value).tint,
+          borderRadius: BorderRadius.circular(AppRadius.card),
+        ),
+        child: Text(
+          'Pratinjau · ${classColor(value).name}',
+          style: TextStyle(
+            color: classColor(value).accent,
+            fontWeight: FontWeight.w700,
+          ),
+        ),
+      ),
+    ],
+  );
 }
 
 class _EmptyClasses extends StatelessWidget {

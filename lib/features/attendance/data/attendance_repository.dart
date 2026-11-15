@@ -25,6 +25,8 @@ class AttendanceRecord {
 class AttendanceSession {
   const AttendanceSession({
     required this.id,
+    required this.classId,
+    required this.subjectId,
     required this.className,
     required this.subjectName,
     required this.date,
@@ -33,6 +35,8 @@ class AttendanceSession {
     required this.records,
   });
   final int id;
+  final int classId;
+  final int subjectId;
   final String className;
   final String subjectName;
   final String date;
@@ -167,6 +171,8 @@ class AttendanceRepository {
     );
     return AttendanceSession(
       id: sessionId,
+      classId: session['class_id'] as int,
+      subjectId: session['subject_id'] as int,
       className: session['class_name_snapshot'] as String,
       subjectName: session['subject_name_snapshot'] as String,
       date: session['date'] as String,

@@ -30,12 +30,14 @@ class SchoolClass {
     required this.periodId,
     required this.name,
     required this.studentCount,
+    required this.colorIndex,
   });
 
   final int id;
   final int periodId;
   final String name;
   final int studentCount;
+  final int colorIndex;
 }
 
 class ClassRepository {
@@ -116,7 +118,7 @@ class ClassRepository {
     final term = search.trim().toLowerCase();
     final rows = await database.rawQuery(
       '''
-      SELECT c.id, c.period_id, c.name, COUNT(s.id) AS student_count
+      SELECT c.id, c.period_id, c.name, c.color_index, COUNT(s.id) AS student_count
       FROM school_class c
       LEFT JOIN student s ON s.class_id = c.id AND s.archived_at IS NULL
       WHERE c.period_id = ? AND c.archived_at IS NULL
@@ -133,6 +135,7 @@ class ClassRepository {
             periodId: row['period_id'] as int,
             name: row['name'] as String,
             studentCount: row['student_count'] as int,
+            colorIndex: row['color_index'] as int,
           ),
         )
         .toList();
@@ -141,7 +144,7 @@ class ClassRepository {
   Future<SchoolClass?> classById(int id) async {
     final rows = await database.rawQuery(
       '''
-      SELECT c.id, c.period_id, c.name, COUNT(s.id) AS student_count
+      SELECT c.id, c.period_id, c.name, c.color_index, COUNT(s.id) AS student_count
       FROM school_class c
       LEFT JOIN student s ON s.class_id = c.id AND s.archived_at IS NULL
       WHERE c.id = ? AND c.archived_at IS NULL
@@ -156,19 +159,55 @@ class ClassRepository {
       periodId: row['period_id'] as int,
       name: row['name'] as String,
       studentCount: row['student_count'] as int,
+      colorIndex: row['color_index'] as int,
     );
   }
 
-  Future<int> createClass({required int periodId, required String name}) async {
+  Future<int> createClass({
+    required int periodId,
+    required String name,
+    int? colorIndex,
+  }) async {
     final trimmed = name.trim();
     if (trimmed.isEmpty) throw const FormatException('Nama kelas wajib diisi.');
+    final selectedColor = colorIndex ?? await nextColorIndex();
+    if (selectedColor < 0 || selectedColor > 8) {
+      throw const FormatException('Warna kelas tidak valid.');
+    }
     final now = DateTime.now().toIso8601String();
     return database.insert('school_class', {
       'period_id': periodId,
       'name': trimmed,
+      'color_index': selectedColor,
       'created_at': now,
       'updated_at': now,
     });
+  }
+
+  Future<int> nextColorIndex() async {
+    final rows = await database.rawQuery(
+      'SELECT COALESCE(MAX(id), 0) AS last_id FROM school_class',
+    );
+    return (rows.single['last_id'] as int) % 9;
+  }
+
+  Future<void> updateClass(int id, String name, int colorIndex) async {
+    final trimmed = name.trim();
+    if (trimmed.isEmpty) throw const FormatException('Nama kelas wajib diisi.');
+    if (colorIndex < 0 || colorIndex > 8) {
+      throw const FormatException('Warna kelas tidak valid.');
+    }
+    final changed = await database.update(
+      'school_class',
+      {
+        'name': trimmed,
+        'color_index': colorIndex,
+        'updated_at': DateTime.now().toIso8601String(),
+      },
+      where: 'id = ? AND archived_at IS NULL',
+      whereArgs: [id],
+    );
+    if (changed == 0) throw StateError('Kelas tidak ditemukan.');
   }
 
   Future<void> renameClass(int id, String name) async {

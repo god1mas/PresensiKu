@@ -56,7 +56,7 @@ class _AttendanceSetupScreenState extends ConsumerState<AttendanceSetupScreen> {
             meetingNumber: meeting,
           );
       if (!mounted) return;
-      context.go(
+      context.push(
         result.completed
             ? '/riwayat/${result.sessionId}'
             : '/absensi/${result.sessionId}',
@@ -259,22 +259,57 @@ class _AttendanceRecordScreenState
     extends ConsumerState<AttendanceRecordScreen> {
   int revision = 0;
   bool busy = false;
+  final Map<int, String> pendingStatus = {};
+
+  void back(AttendanceSession session) {
+    if (busy) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Tunggu sampai perubahan tersimpan.')),
+      );
+      return;
+    }
+    if (context.canPop()) {
+      context.pop();
+    } else {
+      context.go(
+        '/absensi?kelas=${session.classId}&mapel=${session.subjectId}',
+      );
+    }
+  }
 
   Future<void> mark(int recordId, String status) async {
+    if (busy) return;
+    setState(() {
+      busy = true;
+      pendingStatus[recordId] = status;
+    });
     try {
       await ref
           .read(attendanceRepositoryProvider)
           .mark(sessionId: widget.id, recordId: recordId, status: status);
-      if (mounted) setState(() => revision++);
+      if (mounted) {
+        setState(() {
+          pendingStatus.remove(recordId);
+          revision++;
+        });
+      }
     } catch (error) {
       if (mounted) {
         ScaffoldMessenger.of(context)
             .showSnackBar(SnackBar(content: Text(_message(error))));
       }
+    } finally {
+      if (mounted) {
+        setState(() {
+          pendingStatus.remove(recordId);
+          busy = false;
+        });
+      }
     }
   }
 
   Future<void> markAll() async {
+    if (busy) return;
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (dialogContext) => AlertDialog(
@@ -295,6 +330,7 @@ class _AttendanceRecordScreenState
       ),
     );
     if (confirmed != true) return;
+    setState(() => busy = true);
     try {
       await ref.read(attendanceRepositoryProvider).markAllPresent(widget.id);
       if (mounted) setState(() => revision++);
@@ -303,6 +339,8 @@ class _AttendanceRecordScreenState
         ScaffoldMessenger.of(context)
             .showSnackBar(SnackBar(content: Text(_message(error))));
       }
+    } finally {
+      if (mounted) setState(() => busy = false);
     }
   }
 
@@ -344,148 +382,196 @@ class _AttendanceRecordScreenState
       final progress = session.records.isEmpty
           ? 0.0
           : session.markedCount / session.records.length;
-      return Scaffold(
-        appBar: AppBar(
-          title: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text('Absensi ${session.className}'),
-              Text(
-                '${session.subjectName} · Pertemuan ${session.meetingNumber}',
-                style: Theme.of(context).textTheme.bodySmall,
-              ),
-            ],
-          ),
-        ),
-        body: Column(
-          children: [
-            Padding(
-              padding: const EdgeInsets.all(AppSpace.lg),
-              child: Container(
-                padding: const EdgeInsets.all(AppSpace.base),
-                decoration: BoxDecoration(
-                  color: AppColors.iceBlue,
-                  borderRadius: BorderRadius.circular(AppRadius.featured),
+      return PopScope(
+        canPop: false,
+        onPopInvokedWithResult: (didPop, _) {
+          if (!didPop) back(session);
+        },
+        child: Scaffold(
+          appBar: AppBar(
+            leading: IconButton(
+              icon: const Icon(Icons.arrow_back),
+              tooltip: 'Kembali',
+              onPressed: () => back(session),
+            ),
+            title: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text('Absensi ${session.className}'),
+                Text(
+                  '${session.subjectName} · Pertemuan ${session.meetingNumber}',
+                  style: Theme.of(context).textTheme.bodySmall,
                 ),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
+              ],
+            ),
+          ),
+          body: Column(
+            children: [
+              Padding(
+                padding: const EdgeInsets.all(AppSpace.lg),
+                child: Container(
+                  padding: const EdgeInsets.all(AppSpace.base),
+                  decoration: BoxDecoration(
+                    color: AppColors.iceBlue,
+                    borderRadius: BorderRadius.circular(AppRadius.featured),
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const Text('Hari ini'),
+                      Text(
+                        '${session.markedCount} dari ${session.records.length} siswa',
+                        style: Theme.of(context).textTheme.titleLarge,
+                      ),
+                      const SizedBox(height: AppSpace.base),
+                      LinearProgressIndicator(value: progress),
+                    ],
+                  ),
+                ),
+              ),
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: AppSpace.lg),
+                child: Row(
                   children: [
-                    const Text('Hari ini'),
-                    Text(
-                      '${session.markedCount} dari ${session.records.length} siswa',
-                      style: Theme.of(context).textTheme.titleLarge,
+                    Expanded(
+                      child: Text(
+                        'Daftar kehadiran',
+                        style: Theme.of(context).textTheme.titleLarge,
+                      ),
                     ),
-                    const SizedBox(height: AppSpace.base),
-                    LinearProgressIndicator(value: progress),
+                    TextButton(
+                      onPressed: markAll,
+                      child: const Text('✓ Semua hadir'),
+                    ),
                   ],
                 ),
               ),
-            ),
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: AppSpace.lg),
-              child: Row(
-                children: [
-                  Expanded(
-                    child: Text(
-                      'Daftar kehadiran',
-                      style: Theme.of(context).textTheme.titleLarge,
-                    ),
-                  ),
-                  TextButton(
-                    onPressed: markAll,
-                    child: const Text('✓ Semua hadir'),
-                  ),
-                ],
-              ),
-            ),
-            Expanded(
-              child: ListView.builder(
-                padding: const EdgeInsets.symmetric(horizontal: AppSpace.lg),
-                itemCount: session.records.length,
-                itemBuilder: (context, index) {
-                  final record = session.records[index];
-                  return Card(
-                    child: Padding(
-                      padding: const EdgeInsets.all(AppSpace.base),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Row(
-                            children: [
-                              CircleAvatar(
-                                radius: 17,
-                                backgroundColor: AppColors.iceBlue,
-                                child: Text(
-                                  '${record.number}'.padLeft(2, '0'),
-                                  style: const TextStyle(fontSize: 11),
-                                ),
-                              ),
-                              const SizedBox(width: AppSpace.sm),
-                              Expanded(child: Text(record.name)),
-                              if (record.status == null)
-                                const Text(
-                                  'Belum diisi',
-                                  style: TextStyle(
-                                    fontSize: 10,
-                                    color: AppColors.muted,
+              Expanded(
+                child: ListView.builder(
+                  padding: const EdgeInsets.symmetric(horizontal: AppSpace.lg),
+                  itemCount: session.records.length,
+                  itemBuilder: (context, index) {
+                    final record = session.records[index];
+                    final selectedStatus =
+                        pendingStatus[record.id] ?? record.status;
+                    return Card(
+                      color: Colors.white,
+                      elevation: 0,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(AppRadius.card),
+                        side: const BorderSide(color: AppColors.line),
+                      ),
+                      child: Padding(
+                        padding: const EdgeInsets.all(14),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Row(
+                              children: [
+                                CircleAvatar(
+                                  radius: 19,
+                                  backgroundColor: AppColors.iceBlue,
+                                  child: Text(
+                                    '${record.number}'.padLeft(2, '0'),
+                                    style: const TextStyle(
+                                      fontSize: 12,
+                                      fontWeight: FontWeight.w700,
+                                      color: AppColors.blue,
+                                    ),
                                   ),
                                 ),
-                            ],
-                          ),
-                          const SizedBox(height: AppSpace.base),
-                          Row(
-                            children: [
-                              for (final status in const ['H', 'S', 'I', 'A'])
+                                const SizedBox(width: AppSpace.sm),
                                 Expanded(
-                                  child: Padding(
-                                    padding: const EdgeInsets.symmetric(
-                                      horizontal: 2,
+                                  child: Text(
+                                    record.name,
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
+                                    style: Theme.of(context)
+                                        .textTheme
+                                        .titleMedium
+                                        ?.copyWith(fontWeight: FontWeight.w700),
+                                  ),
+                                ),
+                                if (selectedStatus == null)
+                                  const Text(
+                                    'Belum diisi',
+                                    style: TextStyle(
+                                      fontSize: 10,
+                                      color: AppColors.muted,
                                     ),
-                                    child: FilledButton(
-                                      onPressed: () => mark(record.id, status),
-                                      style: FilledButton.styleFrom(
-                                        padding: const EdgeInsets.symmetric(
-                                          horizontal: 2,
+                                  ),
+                              ],
+                            ),
+                            const SizedBox(height: AppSpace.md),
+                            Row(
+                              children: [
+                                for (final status in const ['H', 'S', 'I', 'A'])
+                                  Expanded(
+                                    child: Padding(
+                                      padding: EdgeInsets.only(
+                                        right: status == 'A' ? 0 : 7,
+                                      ),
+                                      child: FilledButton(
+                                        onPressed: busy
+                                            ? null
+                                            : () => mark(record.id, status),
+                                        style: FilledButton.styleFrom(
+                                          minimumSize: const Size(0, 48),
+                                          padding: const EdgeInsets.symmetric(
+                                            horizontal: 0,
+                                          ),
+                                          backgroundColor:
+                                              selectedStatus == status
+                                              ? _statusColor(status)
+                                              : _statusColor(status)
+                                                    .withValues(alpha: 0.11),
+                                          foregroundColor:
+                                              selectedStatus == status
+                                              ? Colors.white
+                                              : _statusColor(status),
+                                          shape: RoundedRectangleBorder(
+                                            borderRadius: BorderRadius.circular(
+                                              AppRadius.card,
+                                            ),
+                                          ),
                                         ),
-                                        backgroundColor: record.status == status
-                                            ? _statusColor(status)
-                                            : const Color(0xFFF1F5FA),
-                                        foregroundColor: record.status == status
-                                            ? Colors.white
-                                            : AppColors.muted,
-                                        shape: RoundedRectangleBorder(
-                                          borderRadius: BorderRadius.circular(
-                                            AppRadius.card,
+                                        child: FittedBox(
+                                          fit: BoxFit.scaleDown,
+                                          child: Text(
+                                            '$status ${_statusLabel(status)}',
+                                            maxLines: 1,
+                                            style: const TextStyle(
+                                              fontSize: 11,
+                                              fontWeight: FontWeight.w700,
+                                            ),
                                           ),
                                         ),
                                       ),
-                                      child: Text(
-                                        '$status ${_statusLabel(status)}',
-                                        maxLines: 1,
-                                        style: const TextStyle(fontSize: 9),
-                                      ),
                                     ),
                                   ),
-                                ),
-                            ],
-                          ),
-                        ],
+                              ],
+                            ),
+                          ],
+                        ),
                       ),
-                    ),
-                  );
-                },
+                    );
+                  },
+                ),
               ),
-            ),
-          ],
-        ),
-        bottomNavigationBar: Padding(
-          padding: const EdgeInsets.all(AppSpace.lg),
-          child: FilledButton(
-            onPressed: busy || session.unmarkedCount > 0 ? null : complete,
-            child: Text(
-              session.unmarkedCount > 0
-                  ? 'Simpan absensi · ${session.unmarkedCount} belum diisi'
-                  : 'Simpan absensi',
+            ],
+          ),
+          bottomNavigationBar: SafeArea(
+            top: false,
+            child: Padding(
+              padding: const EdgeInsets.all(AppSpace.lg),
+              child: FilledButton(
+                onPressed: busy || session.unmarkedCount > 0 ? null : complete,
+                child: Text(
+                  session.unmarkedCount > 0
+                      ? 'Simpan absensi · ${session.unmarkedCount} belum diisi'
+                      : 'Simpan absensi',
+                ),
+              ),
             ),
           ),
         ),
@@ -508,76 +594,90 @@ class AttendanceSuccessScreen extends ConsumerWidget {
         return const Scaffold(body: Center(child: CircularProgressIndicator()));
       }
       final session = snapshot.data!;
-      return Scaffold(
-        body: SafeArea(
-          child: ListView(
-            padding: const EdgeInsets.all(AppSpace.lg),
-            children: [
-              const SizedBox(height: AppSpace.xl),
-              const Chip(label: Text('SELESAI!')),
-              const SizedBox(height: AppSpace.lg),
-              const CircleAvatar(
-                radius: 80,
-                backgroundColor: AppColors.green,
-                child: Icon(Icons.check, size: 64, color: Colors.white),
-              ),
-              const SizedBox(height: AppSpace.xl),
-              Text(
-                'Sip, absensi tersimpan!',
-                textAlign: TextAlign.center,
-                style: Theme.of(context).textTheme.headlineMedium,
-              ),
-              const SizedBox(height: AppSpace.sm),
-              Text(
-                'Catatan kelas ${session.className} sudah aman tersimpan di perangkat ini.',
-                textAlign: TextAlign.center,
-              ),
-              const SizedBox(height: AppSpace.xl),
-              Card(
-                child: Padding(
-                  padding: const EdgeInsets.all(AppSpace.lg),
-                  child: Column(
-                    children: [
-                      Text(
-                        '${session.subjectName} · Pertemuan ${session.meetingNumber}',
-                      ),
-                      Text(session.date),
-                      const SizedBox(height: AppSpace.base),
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceAround,
-                        children: [
-                          for (final status in const ['H', 'S', 'I', 'A'])
-                            Column(
-                              children: [
-                                Text(
-                                  '${session.records.where((r) => r.status == status).length}',
-                                ),
-                                Text(_statusLabel(status)),
-                              ],
-                            ),
-                        ],
-                      ),
-                    ],
+      return PopScope(
+        canPop: false,
+        onPopInvokedWithResult: (didPop, _) {
+          if (!didPop) context.go('/riwayat/$id');
+        },
+        child: Scaffold(
+          appBar: AppBar(
+            title: const Text('Absensi tersimpan'),
+            leading: IconButton(
+              tooltip: 'Kembali',
+              icon: const Icon(Icons.arrow_back),
+              onPressed: () => context.go('/riwayat/$id'),
+            ),
+          ),
+          body: SafeArea(
+            child: ListView(
+              padding: const EdgeInsets.all(AppSpace.lg),
+              children: [
+                const SizedBox(height: AppSpace.xl),
+                const Chip(label: Text('SELESAI!')),
+                const SizedBox(height: AppSpace.lg),
+                const CircleAvatar(
+                  radius: 80,
+                  backgroundColor: AppColors.green,
+                  child: Icon(Icons.check, size: 64, color: Colors.white),
+                ),
+                const SizedBox(height: AppSpace.xl),
+                Text(
+                  'Sip, absensi tersimpan!',
+                  textAlign: TextAlign.center,
+                  style: Theme.of(context).textTheme.headlineMedium,
+                ),
+                const SizedBox(height: AppSpace.sm),
+                Text(
+                  'Catatan kelas ${session.className} sudah aman tersimpan di perangkat ini.',
+                  textAlign: TextAlign.center,
+                ),
+                const SizedBox(height: AppSpace.xl),
+                Card(
+                  child: Padding(
+                    padding: const EdgeInsets.all(AppSpace.lg),
+                    child: Column(
+                      children: [
+                        Text(
+                          '${session.subjectName} · Pertemuan ${session.meetingNumber}',
+                        ),
+                        Text(session.date),
+                        const SizedBox(height: AppSpace.base),
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceAround,
+                          children: [
+                            for (final status in const ['H', 'S', 'I', 'A'])
+                              Column(
+                                children: [
+                                  Text(
+                                    '${session.records.where((r) => r.status == status).length}',
+                                  ),
+                                  Text(_statusLabel(status)),
+                                ],
+                              ),
+                          ],
+                        ),
+                      ],
+                    ),
                   ),
                 ),
-              ),
-              const SizedBox(height: AppSpace.xl),
-              SizedBox(
-                width: double.infinity,
-                child: FilledButton(
-                  onPressed: () => context.go('/riwayat/$id'),
-                  child: const Text('Lihat rekap'),
+                const SizedBox(height: AppSpace.xl),
+                SizedBox(
+                  width: double.infinity,
+                  child: FilledButton(
+                    onPressed: () => context.go('/riwayat/$id'),
+                    child: const Text('Lihat rekap'),
+                  ),
                 ),
-              ),
-              const SizedBox(height: AppSpace.sm),
-              SizedBox(
-                width: double.infinity,
-                child: OutlinedButton(
-                  onPressed: () => context.go('/beranda'),
-                  child: const Text('Kembali ke beranda'),
+                const SizedBox(height: AppSpace.sm),
+                SizedBox(
+                  width: double.infinity,
+                  child: OutlinedButton(
+                    onPressed: () => context.go('/beranda'),
+                    child: const Text('Kembali ke beranda'),
+                  ),
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
         ),
       );
@@ -592,10 +692,10 @@ String _statusLabel(String status) => switch (status) {
   _ => 'Alpha',
 };
 Color _statusColor(String status) => switch (status) {
-  'H' => AppColors.green,
-  'S' => const Color(0xFFEFAF32),
+  'H' => const Color(0xFF168345),
+  'S' => const Color(0xFF985A08),
   'I' => AppColors.blue,
-  _ => const Color(0xFFE46D4A),
+  _ => const Color(0xFFB84045),
 };
 String _message(Object error) {
   if (error is FormatException) return error.message;

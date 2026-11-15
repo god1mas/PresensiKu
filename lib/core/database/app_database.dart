@@ -9,7 +9,7 @@ final appDatabaseProvider = Provider<AppDatabase>((ref) {
 class AppDatabase {
   AppDatabase._(this.database);
 
-  static const schemaVersion = 2;
+  static const schemaVersion = 3;
   final Database database;
 
   static Future<AppDatabase> open({
@@ -56,6 +56,7 @@ class AppDatabase {
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         period_id INTEGER NOT NULL REFERENCES academic_period(id) ON DELETE RESTRICT,
         name TEXT NOT NULL CHECK (length(trim(name)) > 0),
+        color_index INTEGER NOT NULL DEFAULT 0 CHECK (color_index BETWEEN 0 AND 8),
         archived_at TEXT,
         created_at TEXT NOT NULL,
         updated_at TEXT NOT NULL
@@ -134,8 +135,14 @@ class AppDatabase {
     int oldVersion,
     int newVersion,
   ) async {
-    if (oldVersion == 1 && newVersion >= 2) {
+    if (oldVersion < 2 && newVersion >= 2) {
       await _createGradingSchema(db);
+    }
+    if (oldVersion < 3 && newVersion >= 3) {
+      await db.execute(
+        'ALTER TABLE school_class ADD COLUMN color_index INTEGER NOT NULL DEFAULT 0 CHECK (color_index BETWEEN 0 AND 8)',
+      );
+      await db.execute('UPDATE school_class SET color_index = (id - 1) % 9');
     }
   }
 
