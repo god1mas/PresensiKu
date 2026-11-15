@@ -584,8 +584,8 @@ class _ClassDetailScreenState extends ConsumerState<ClassDetailScreen> {
       context: context,
       builder: (dialogContext) => AlertDialog(
         title: const Text('Arsipkan kelas?'),
-        content: AcademicText(
-          'Kelas ${item.name} dan siswa aktifnya akan disembunyikan dari daftar. Riwayat absensi tetap tersimpan.',
+        content: Text(
+          'Kelas ${item.name} dan ${educationTerms(context).student.toLowerCase()} aktifnya akan disembunyikan dari daftar. Riwayat absensi tetap tersimpan.',
         ),
         actions: [
           TextButton(
@@ -810,15 +810,17 @@ class _EmptyClasses extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => Center(
-    child: Column(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        const Icon(Icons.school_outlined, size: 64, color: AppColors.blue),
-        const SizedBox(height: AppSpace.base),
-        Text(message, style: Theme.of(context).textTheme.titleLarge),
-        const SizedBox(height: AppSpace.lg),
-        FilledButton(onPressed: onAdd, child: const Text('Tambah')),
-      ],
+    child: SingleChildScrollView(
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          const Icon(Icons.school_outlined, size: 64, color: AppColors.blue),
+          const SizedBox(height: AppSpace.base),
+          Text(message, style: Theme.of(context).textTheme.titleLarge),
+          const SizedBox(height: AppSpace.lg),
+          FilledButton(onPressed: onAdd, child: const Text('Tambah')),
+        ],
+      ),
     ),
   );
 }

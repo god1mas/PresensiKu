@@ -1,5 +1,6 @@
 import 'package:excel/excel.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:presensiku/core/education/education_level.dart';
 import 'package:presensiku/core/database/app_database.dart';
 import 'package:presensiku/features/academics/data/class_repository.dart';
 import 'package:presensiku/features/academics/data/roster_repository.dart';
@@ -10,6 +11,46 @@ import 'package:sqflite_common_ffi/sqflite_ffi.dart';
 
 void main() {
   sqfliteFfiInit();
+
+  test('university attendance workbook keeps NIM as text in both sheets', () {
+    const nim = '0012345678';
+    final report = ReportData(
+      educationLevel: EducationLevel.university,
+      details: const [
+        ReportDetail(
+          studentId: 1,
+          number: 1,
+          studentName: 'Ayu',
+          nis: nim,
+          className: 'Informatika A',
+          subjectName: 'Algoritma',
+          date: '2026-11-16',
+          meetingNumber: 1,
+          status: 'H',
+        ),
+      ],
+      summaries: const [
+        StudentSummary(
+          studentId: 1,
+          number: 1,
+          name: 'Ayu',
+          nis: nim,
+          present: 1,
+          sick: 0,
+          excused: 0,
+          absent: 0,
+        ),
+      ],
+    );
+    final workbook = Excel.decodeBytes(const XlsxExporter().build(report));
+    final detail = workbook['Detail Absensi'].rows;
+    final summary = workbook['Rekap Absensi'].rows;
+    expect(detail.first[2]?.value, TextCellValue('NIM'));
+    expect(detail[1][2]?.value, TextCellValue(nim));
+    expect(summary.first[2]?.value, TextCellValue('NIM'));
+    expect(summary[1][2]?.value, TextCellValue(nim));
+    expect(summary.first.length, 9);
+  });
 
   test(
     'report denominators, filters, and Excel workbook stay accurate',

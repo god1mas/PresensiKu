@@ -43,7 +43,7 @@ Backups support schemas 1–3. Profiles contain no education level.
 2. Year and semester scope, migration, backup, switching: PASS — `dart format`, clean `flutter analyze`, 57/57 full tests. School Ganjil/Genap meeting 1 coexist; 40-student year continuity, isolated assessments/weights, repeat switching, restart, university enrollment isolation, populated V1/V2/V3 upgrades/backups, historical reports and active-period dashboard were verified.
 3. Class archive recovery: PASS — original ID/color/history retained, known cascade children restored, prior archives/unlinks retained, duplicate names roll back, backup/reopen verified, 320 px UI test and clean analyzer.
 4. Grading history filters and responsive UI: PASS — title search, compact period/class/subject/date filters, visible active state/reset, historical detail navigation, 320/393 px widget tests, clean analyzer.
-5. Full regression: IN PROGRESS.
+5. Full regression: PASS — `dart format lib test` completed; `flutter analyze --no-pub` found no issues; full `flutter test --no-pub` passed 61/61 tests. Regression coverage includes populated migrations and backups, semester switching and history, archive restoration, attendance, grading, four-sheet grade XLSX, two-sheet attendance XLSX, and a 40-student workflow. University attendance sheets retain NIM as text in both detail and summary. A class empty-state overflow found by the full suite was corrected.
 6. APK, signing comparison, release documentation: NOT STARTED.
 
 Device QA must be reported separately from automated verification. No GitHub

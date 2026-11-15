@@ -259,8 +259,8 @@ class _SubjectDetailScreenState extends ConsumerState<SubjectDetailScreen> {
                       scope.subjectName,
                       style: Theme.of(context).textTheme.titleLarge,
                     ),
-                    AcademicText(
-                      '${scope.className} · ${scope.studentCount} siswa · ${scope.periodName}',
+                    Text(
+                      '${scope.className} · ${scope.studentCount} ${educationTerms(context).student.toLowerCase()} · ${scope.periodName}',
                     ),
                   ],
                 ),
@@ -798,8 +798,8 @@ class _AssessmentFormScreenState extends ConsumerState<AssessmentFormScreen> {
               widget.assessmentId == null ? 'Penilaian baru' : 'Ubah penilaian',
               style: const TextStyle(fontWeight: FontWeight.w700),
             ),
-            AcademicText(
-              '${scope.studentCount} siswa kelas ${scope.className} terhubung.',
+            Text(
+              '${scope.studentCount} ${educationTerms(context).student.toLowerCase()} kelas ${scope.className} terhubung.',
             ),
           ],
         ),

@@ -17,7 +17,7 @@ class XlsxExporter {
     workbook.delete('Sheet1');
 
     detail.appendRow([
-      TextCellValue('No. Absen'),
+      TextCellValue(terms.translate('No. Absen')),
       TextCellValue(terms.translate('Nama Siswa')),
       TextCellValue(terms.translate('NIS/NISN')),
       TextCellValue('Kelas'),
@@ -40,8 +40,9 @@ class XlsxExporter {
     }
 
     summary.appendRow([
-      TextCellValue('No. Absen'),
+      TextCellValue(terms.translate('No. Absen')),
       TextCellValue(terms.translate('Nama Siswa')),
+      if (terms.university) TextCellValue('NIM'),
       TextCellValue('Total H'),
       TextCellValue('Total S'),
       TextCellValue('Total I'),
@@ -53,6 +54,7 @@ class XlsxExporter {
       summary.appendRow([
         IntCellValue(row.number),
         TextCellValue(row.name),
+        if (terms.university) TextCellValue(row.nis ?? ''),
         IntCellValue(row.present),
         IntCellValue(row.sick),
         IntCellValue(row.excused),
@@ -65,9 +67,10 @@ class XlsxExporter {
     }
 
     _formatHeader(detail, 8);
-    _formatHeader(summary, 8);
+    _formatHeader(summary, terms.university ? 9 : 8);
     for (final sheet in [detail, summary]) {
-      for (var column = 0; column < 8; column++) {
+      final columns = sheet == summary && terms.university ? 9 : 8;
+      for (var column = 0; column < columns; column++) {
         sheet.setColumnWidth(
           column,
           column == 1 || column == 4 || column == 7 ? 25 : 18,

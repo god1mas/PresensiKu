@@ -161,8 +161,8 @@ class _AttendanceSetupScreenState extends ConsumerState<AttendanceSetupScreen> {
                         .map(
                           (item) => DropdownMenuItem(
                             value: item.id,
-                            child: AcademicText(
-                              '${item.name} · ${item.studentCount} siswa',
+                            child: Text(
+                              '${item.name} · ${item.studentCount} ${educationTerms(context).student.toLowerCase()}',
                             ),
                           ),
                         )

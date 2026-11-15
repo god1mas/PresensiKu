@@ -211,3 +211,9 @@
 - Phase 4 PASS: Riwayat Penilaian now puts title search first, groups period/class/subject/date controls compactly, shows active filter chips, and provides one reset action. Labels follow education terminology. Historical assessment navigation carries the original semester. Layout supports 320 px and 393 px.
 - Verification: Three targeted widget tests passed for search, class/subject/period filtering, reset, Back/navigation, and narrow layouts. `flutter analyze --no-pub` found no issues.
 - Next: Phase 5 full regression and Phase 6 release-mode QA APK. Native device QA remains pending.
+
+## KelasKu 1.4 academic redesign — Phase 5 checkpoint (2026-11-16)
+
+- Phase 5 PASS: Rechecked education terminology without altering user-entered class names. University attendance XLSX detail and summary now identify students by NIM as text, preserving leading zeros; school workbook columns remain unchanged. Corrected the class-list empty state overflow detected in the full widget suite.
+- Verification: `dart format lib test` completed; `flutter analyze --no-pub` found no issues; complete `flutter test --no-pub` passed 61/61 tests. Coverage includes V1/V2/V3 populated migration and backup restore, school and university semester cycles, attendance/grades, class archive restoration, four-sheet grade XLSX, attendance XLSX, and a 40-student workflow.
+- Next: Phase 6 v1.4.0+5 release-mode QA APK, metadata/signature comparison, release documentation. Physical-device acceptance remains pending.

@@ -110,11 +110,11 @@ class _HistoryScreenState extends ConsumerState<HistoryScreen> {
                     builder: (context, snapshot) => DropdownButton<int?>(
                       isExpanded: true,
                       value: subjectId,
-                      hint: const Text('Semua mapel'),
+                      hint: const AcademicText('Semua mapel'),
                       items: [
                         const DropdownMenuItem<int?>(
                           value: null,
-                          child: Text('Semua mapel'),
+                          child: AcademicText('Semua mapel'),
                         ),
                         ...?snapshot.data?.map(
                           (option) => DropdownMenuItem<int?>(

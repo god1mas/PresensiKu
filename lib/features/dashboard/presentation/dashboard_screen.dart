@@ -381,7 +381,7 @@ class _Metric extends StatelessWidget {
                   style: Theme.of(context).textTheme.headlineMedium
                       ?.copyWith(fontSize: 26),
                 ),
-                Text(
+                AcademicText(
                   label,
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,

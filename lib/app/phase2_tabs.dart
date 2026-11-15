@@ -226,7 +226,9 @@ class SettingsTab extends ConsumerWidget {
                         style: const TextStyle(color: Colors.white),
                       ),
                       subtitle: Text(
-                        data.schoolName ?? 'Nama sekolah belum diisi',
+                        data.schoolName ??
+                            educationTerms(context)
+                                .translate('Nama sekolah belum diisi'),
                         style: const TextStyle(color: Colors.white),
                       ),
                     ),

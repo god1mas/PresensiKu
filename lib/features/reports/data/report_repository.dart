@@ -52,6 +52,7 @@ class StudentSummary {
     required this.studentId,
     required this.number,
     required this.name,
+    this.nis,
     required this.present,
     required this.sick,
     required this.excused,
@@ -60,6 +61,7 @@ class StudentSummary {
   final int studentId;
   final int number;
   final String name;
+  final String? nis;
   final int present;
   final int sick;
   final int excused;
@@ -147,6 +149,7 @@ class ReportRepository {
             studentId: entry.key,
             number: latest.number,
             name: latest.studentName,
+            nis: latest.nis,
             present: count('H'),
             sick: count('S'),
             excused: count('I'),

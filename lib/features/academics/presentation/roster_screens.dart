@@ -67,7 +67,9 @@ class _StudentListPanelState extends ConsumerState<StudentListPanel> {
                 initialValue: number,
                 onChanged: (value) => number = value,
                 keyboardType: TextInputType.number,
-                decoration: InputDecoration(labelText: 'Nomor absen'),
+                decoration: InputDecoration(
+                  labelText: educationTerms(context).translate('Nomor absen'),
+                ),
               ),
               const SizedBox(height: AppSpace.base),
               TextFormField(

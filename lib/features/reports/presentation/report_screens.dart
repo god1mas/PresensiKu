@@ -412,7 +412,7 @@ class _ReportFilters extends ConsumerWidget {
             items: [
               const DropdownMenuItem<int?>(
                 value: null,
-                child: Text('Semua mapel'),
+                child: AcademicText('Semua mapel'),
               ),
               ...?snapshot.data?.map(
                 (option) => DropdownMenuItem<int?>(
