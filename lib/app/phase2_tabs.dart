@@ -1,3 +1,4 @@
+import 'package:presensiku/core/education/academic_scope.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -183,66 +184,7 @@ class SettingsTab extends ConsumerWidget {
     WidgetRef ref,
     TeacherProfile profile,
   ) async {
-    final name = TextEditingController(text: profile.name);
-    final school = TextEditingController(text: profile.schoolName);
-    final formKey = GlobalKey<FormState>();
-    await showDialog<void>(
-      context: context,
-      builder: (dialogContext) => AlertDialog(
-        title: const Text('Ubah Profil Guru'),
-        content: Form(
-          key: formKey,
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              TextFormField(
-                controller: name,
-                decoration: const InputDecoration(labelText: 'Nama guru'),
-                validator: (value) => value == null || value.trim().isEmpty
-                    ? 'Nama guru wajib diisi'
-                    : null,
-              ),
-              const SizedBox(height: AppSpace.base),
-              TextFormField(
-                controller: school,
-                decoration: const InputDecoration(
-                  labelText: 'Nama sekolah (opsional)',
-                ),
-              ),
-            ],
-          ),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(dialogContext),
-            child: const Text('Batal'),
-          ),
-          FilledButton(
-            onPressed: () async {
-              if (!formKey.currentState!.validate()) return;
-              try {
-                await ref
-                    .read(profileRepositoryProvider)
-                    .save(name: name.text, schoolName: school.text);
-                ref.invalidate(teacherProfileProvider);
-                if (dialogContext.mounted) Navigator.pop(dialogContext);
-              } catch (_) {
-                if (dialogContext.mounted) {
-                  ScaffoldMessenger.of(dialogContext).showSnackBar(
-                    const SnackBar(
-                      content: Text('Profil belum tersimpan. Coba lagi.'),
-                    ),
-                  );
-                }
-              }
-            },
-            child: const Text('Simpan'),
-          ),
-        ],
-      ),
-    );
-    name.dispose();
-    school.dispose();
+    await context.push('/onboarding');
   }
 
   @override
@@ -255,7 +197,7 @@ class SettingsTab extends ConsumerWidget {
         error: (_, _) =>
             const Center(child: Text('Profil belum dapat dimuat.')),
         data: (data) => data == null
-            ? const Center(child: Text('Profil guru belum tersedia.'))
+            ? const Center(child: AcademicText('Profil guru belum tersedia.'))
             : ListView(
                 padding: const EdgeInsets.all(AppSpace.lg),
                 children: [
@@ -296,8 +238,8 @@ class SettingsTab extends ConsumerWidget {
                   ),
                   ListTile(
                     leading: const Icon(Icons.edit_outlined),
-                    title: const Text('Profil guru'),
-                    subtitle: const Text('Nama dan informasi sekolah'),
+                    title: const AcademicText('Profil guru'),
+                    subtitle: const AcademicText('Nama dan informasi sekolah'),
                     trailing: const Icon(Icons.chevron_right),
                     onTap: () => _editProfile(context, ref, data),
                   ),
@@ -310,7 +252,7 @@ class SettingsTab extends ConsumerWidget {
                   ),
                   ListTile(
                     leading: const Icon(Icons.menu_book_outlined),
-                    title: const Text('Mata pelajaran'),
+                    title: const AcademicText('Mata pelajaran'),
                     trailing: const Icon(Icons.chevron_right),
                     onTap: () => context.push('/mata-pelajaran'),
                   ),

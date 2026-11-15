@@ -1,3 +1,4 @@
+import 'package:presensiku/core/education/academic_scope.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -41,7 +42,9 @@ class _AttendanceSetupScreenState extends ConsumerState<AttendanceSetupScreen> {
   Future<void> continueAttendance() async {
     if (classId == null || subjectId == null) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Pilih kelas dan mata pelajaran.')),
+        const SnackBar(
+          content: AcademicText('Pilih kelas dan mata pelajaran.'),
+        ),
       );
       return;
     }
@@ -54,6 +57,7 @@ class _AttendanceSetupScreenState extends ConsumerState<AttendanceSetupScreen> {
             subjectId: subjectId!,
             date: DateFormat('yyyy-MM-dd').format(date),
             meetingNumber: meeting,
+            periodId: ref.read(selectedAcademicPeriodProvider),
           );
       if (!mounted) return;
       context.push(
@@ -84,7 +88,11 @@ class _AttendanceSetupScreenState extends ConsumerState<AttendanceSetupScreen> {
             return const Center(child: CircularProgressIndicator());
           }
           final active = periodSnapshot.data!
-              .where((p) => p.isActive)
+              .where(
+                (p) => ref.read(selectedAcademicPeriodProvider) == null
+                    ? p.isActive
+                    : p.id == ref.read(selectedAcademicPeriodProvider),
+              )
               .firstOrNull;
           if (active == null) {
             return const Center(
@@ -118,6 +126,11 @@ class _AttendanceSetupScreenState extends ConsumerState<AttendanceSetupScreen> {
               return ListView(
                 padding: const EdgeInsets.all(AppSpace.lg),
                 children: [
+                  Text(
+                    active.label,
+                    style: Theme.of(context).textTheme.titleMedium,
+                  ),
+                  const SizedBox(height: AppSpace.base),
                   Container(
                     padding: const EdgeInsets.all(AppSpace.base),
                     decoration: BoxDecoration(
@@ -143,12 +156,12 @@ class _AttendanceSetupScreenState extends ConsumerState<AttendanceSetupScreen> {
                   DropdownButtonFormField<int>(
                     key: ValueKey(selectedClassId),
                     initialValue: selectedClassId,
-                    decoration: const InputDecoration(labelText: 'Pilih kelas'),
+                    decoration: InputDecoration(labelText: 'Pilih kelas'),
                     items: available
                         .map(
                           (item) => DropdownMenuItem(
                             value: item.id,
-                            child: Text(
+                            child: AcademicText(
                               '${item.name} · ${item.studentCount} siswa',
                             ),
                           ),
@@ -166,7 +179,7 @@ class _AttendanceSetupScreenState extends ConsumerState<AttendanceSetupScreen> {
                       builder: (context, snapshot) {
                         final subjects = snapshot.data ?? [];
                         if (snapshot.hasData && subjects.isEmpty) {
-                          return const Text(
+                          return const AcademicText(
                             'Hubungkan mata pelajaran ke kelas ini terlebih dahulu.',
                           );
                         }
@@ -176,8 +189,9 @@ class _AttendanceSetupScreenState extends ConsumerState<AttendanceSetupScreen> {
                               subjects.any((item) => item.id == subjectId)
                               ? subjectId
                               : null,
-                          decoration: const InputDecoration(
-                            labelText: 'Mata pelajaran',
+                          decoration: InputDecoration(
+                            labelText: educationTerms(context)
+                                .translate('Mata pelajaran'),
                           ),
                           items: subjects
                               .map(
@@ -214,9 +228,7 @@ class _AttendanceSetupScreenState extends ConsumerState<AttendanceSetupScreen> {
                   TextFormField(
                     initialValue: '1',
                     keyboardType: TextInputType.number,
-                    decoration: const InputDecoration(
-                      labelText: 'Pertemuan / Sesi',
-                    ),
+                    decoration: InputDecoration(labelText: 'Pertemuan / Sesi'),
                     onChanged: (value) => meeting = int.tryParse(value) ?? 0,
                   ),
                   const SizedBox(height: AppSpace.lg),
@@ -310,11 +322,11 @@ class _AttendanceRecordScreenState
 
   Future<void> markAll() async {
     if (busy) return;
-    final confirmed = await showDialog<bool>(
+    final confirmed = await showAcademicDialog<bool>(
       context: context,
       builder: (dialogContext) => AlertDialog(
         title: const Text('Tandai semua hadir?'),
-        content: const Text(
+        content: const AcademicText(
           'Status siswa yang sudah dipilih juga akan berubah menjadi Hadir.',
         ),
         actions: [
@@ -419,7 +431,7 @@ class _AttendanceRecordScreenState
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       const Text('Hari ini'),
-                      Text(
+                      AcademicText(
                         '${session.markedCount} dari ${session.records.length} siswa',
                         style: Theme.of(context).textTheme.titleLarge,
                       ),

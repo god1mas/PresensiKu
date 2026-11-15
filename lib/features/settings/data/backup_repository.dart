@@ -12,7 +12,8 @@ final backupRepositoryProvider = Provider<BackupRepository>((ref) {
 });
 
 class BackupPreview {
-  const BackupPreview(this.data);
+  const BackupPreview(this.data, this.version);
+  final int version;
   final Map<String, List<Map<String, Object?>>> data;
 
   int count(String table) => data[table]?.length ?? 0;
@@ -34,7 +35,7 @@ class BackupRepository {
     'attendance_session',
     'attendance_record',
   ];
-  static const tables = <String>[
+  static const version3Tables = <String>[
     ...legacyTables,
     'assessment_category',
     'assessment',
@@ -43,6 +44,9 @@ class BackupRepository {
     'grading_weight_item',
     'grading_audit_log',
   ];
+
+  static const version4Tables = <String>['student_identity', ...version3Tables];
+  static const tables = <String>['academic_year', ...version4Tables];
 
   Future<Uint8List> create() async {
     final data = await database.transaction((txn) async {
@@ -75,10 +79,18 @@ class BackupRepository {
       final version = decoded['schemaVersion'];
       if (version != 1 &&
           version != 2 &&
+          version != 3 &&
+          version != 4 &&
           version != AppDatabase.schemaVersion) {
         throw const FormatException('Versi database cadangan tidak cocok.');
       }
-      final expectedTables = version == 1 ? legacyTables : tables;
+      final expectedTables = version == 1
+          ? legacyTables
+          : version == 2 || version == 3
+          ? version3Tables
+          : version == 4
+          ? version4Tables
+          : tables;
       final raw = decoded['data'];
       if (raw is! Map<String, dynamic> ||
           raw.length != expectedTables.length ||
@@ -112,7 +124,17 @@ class BackupRepository {
       for (final table in tables) {
         data.putIfAbsent(table, () => []);
       }
-      return BackupPreview(data);
+      if ((version as int) < 5) {
+        for (final row in data['academic_period']!) {
+          row.remove('year_id');
+        }
+      }
+      if (version < 4) {
+        for (final row in data['student']!) {
+          row.remove('identity_id');
+        }
+      }
+      return BackupPreview(data, version);
     } on FormatException {
       rethrow;
     } catch (_) {
@@ -153,6 +175,11 @@ class BackupRepository {
             'updated_at': now,
           });
         }
+      }
+      await AppDatabase.populateStudentIdentities(txn);
+      await AppDatabase.populateAcademicYears(txn);
+      if (backup.version < 5) {
+        await AppDatabase.populateIdentifierSnapshots(txn);
       }
       final invalidRelations = await txn.rawQuery('PRAGMA foreign_key_check');
       if (invalidRelations.isNotEmpty) {

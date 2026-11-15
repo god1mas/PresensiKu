@@ -1,3 +1,4 @@
+import 'package:presensiku/core/education/academic_scope.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_svg/flutter_svg.dart';
@@ -112,7 +113,7 @@ class DashboardScreen extends ConsumerWidget {
               child: Row(
                 children: [
                   Expanded(
-                    child: Text(
+                    child: AcademicText(
                       'Kelola kelasmu, catat presensi,\ndan nilai siswa di satu tempat.',
                       style: Theme.of(context).textTheme.bodyLarge
                           ?.copyWith(fontSize: 13),
@@ -216,7 +217,7 @@ class DashboardScreen extends ConsumerWidget {
                                   style: Theme.of(context).textTheme.titleLarge
                                       ?.copyWith(fontSize: 18),
                                 ),
-                                Text(
+                                AcademicText(
                                   '${item.studentCount} siswa',
                                   style: Theme.of(context).textTheme.bodySmall,
                                 ),

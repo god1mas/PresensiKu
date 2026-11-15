@@ -1,3 +1,5 @@
+import 'package:presensiku/core/education/education_level.dart';
+
 import 'dart:io';
 
 import 'package:excel/excel.dart';
@@ -30,7 +32,8 @@ void main() {
         path: '${directory.path}/source.db',
       );
       addTearDown(app.close);
-      await ProfileRepository(app.database).save(name: 'Ibu Sari');
+      await ProfileRepository(app.database)
+          .save(educationLevel: EducationLevel.smp, name: 'Ibu Sari');
       final classes = ClassRepository(app.database);
       final roster = RosterRepository(app.database);
       final attendance = AttendanceRepository(app.database);

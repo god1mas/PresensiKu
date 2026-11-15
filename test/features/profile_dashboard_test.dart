@@ -1,3 +1,5 @@
+import 'package:presensiku/core/education/education_level.dart';
+
 import 'dart:io';
 
 import 'package:flutter_test/flutter_test.dart';
@@ -20,8 +22,11 @@ void main() {
       factory: databaseFactoryFfi,
       path: path,
     );
-    await ProfileRepository(first.database)
-        .save(name: '  Budi Santoso  ', schoolName: ' SMP Negeri 1 ');
+    await ProfileRepository(first.database).save(
+      educationLevel: EducationLevel.smp,
+      name: '  Budi Santoso  ',
+      schoolName: ' SMP Negeri 1 ',
+    );
     await first.close();
 
     final second = await AppDatabase.open(
@@ -103,6 +108,12 @@ void main() {
       'updated_at': now,
     });
 
+    await db.insert('class_subject', {
+      'class_id': schoolClass,
+      'subject_id': subject,
+      'created_at': now,
+      'updated_at': now,
+    });
     final summary = await DashboardRepository(db).load();
     expect(summary.classCount, 1);
     expect(summary.studentCount, 1);

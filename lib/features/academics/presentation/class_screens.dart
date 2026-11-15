@@ -1,3 +1,4 @@
+import 'package:presensiku/core/education/academic_scope.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -30,7 +31,7 @@ class _ClassListScreenState extends ConsumerState<ClassListScreen> {
   Future<void> addPeriod() async {
     var year = '';
     var semester = 'ganjil';
-    final result = await showDialog<bool>(
+    final result = await showAcademicDialog<bool>(
       context: context,
       builder: (dialogContext) => StatefulBuilder(
         builder: (context, setDialogState) => AlertDialog(
@@ -90,7 +91,7 @@ class _ClassListScreenState extends ConsumerState<ClassListScreen> {
     var name = '';
     var colorIndex = await ref.read(classRepositoryProvider).nextColorIndex();
     if (!mounted) return;
-    final result = await showDialog<bool>(
+    final result = await showAcademicDialog<bool>(
       context: context,
       builder: (dialogContext) => StatefulBuilder(
         builder: (context, setDialogState) => AlertDialog(
@@ -274,7 +275,13 @@ class _ClassListScreenState extends ConsumerState<ClassListScreen> {
                       );
                     }
                     Future<void> open(SchoolClass item) async {
-                      await context.push('/kelas/${item.id}');
+                      await context.push(
+                        periodPath(
+                          context,
+                          '/kelas/${item.id}',
+                          periodId: chosen.id,
+                        ),
+                      );
                       if (mounted) refresh();
                     }
 
@@ -327,7 +334,9 @@ class _ClassListScreenState extends ConsumerState<ClassListScreen> {
                                         .textTheme
                                         .headlineLarge,
                                   ),
-                                  Text('${classes.first.studentCount} siswa'),
+                                  AcademicText(
+                                    '${classes.first.studentCount} siswa',
+                                  ),
                                 ],
                               ),
                             ),
@@ -365,7 +374,9 @@ class _ClassListScreenState extends ConsumerState<ClassListScreen> {
                                 ),
                               ),
                               title: Text(item.name),
-                              subtitle: Text('${item.studentCount} siswa'),
+                              subtitle: AcademicText(
+                                '${item.studentCount} siswa',
+                              ),
                               trailing: const Icon(Icons.chevron_right),
                               onTap: () => open(item),
                             ),
@@ -423,7 +434,7 @@ class _ClassDetailScreenState extends ConsumerState<ClassDetailScreen> {
   Future<void> rename(SchoolClass item) async {
     var name = item.name;
     var colorIndex = item.colorIndex;
-    final result = await showDialog<bool>(
+    final result = await showAcademicDialog<bool>(
       context: context,
       builder: (dialogContext) => StatefulBuilder(
         builder: (context, setDialogState) => AlertDialog(
@@ -475,11 +486,11 @@ class _ClassDetailScreenState extends ConsumerState<ClassDetailScreen> {
   }
 
   Future<void> archive(SchoolClass item) async {
-    final confirmed = await showDialog<bool>(
+    final confirmed = await showAcademicDialog<bool>(
       context: context,
       builder: (dialogContext) => AlertDialog(
         title: const Text('Arsipkan kelas?'),
-        content: Text(
+        content: AcademicText(
           'Kelas ${item.name} dan siswa aktifnya akan disembunyikan dari daftar. Riwayat absensi tetap tersimpan.',
         ),
         actions: [
@@ -579,7 +590,7 @@ class _ClassDetailScreenState extends ConsumerState<ClassDetailScreen> {
                     ),
                   ),
                   const SizedBox(height: AppSpace.xs),
-                  Text(
+                  AcademicText(
                     'Pilih mata pelajaran untuk membuka area kerja kelas.',
                     style: Theme.of(context).textTheme.bodyMedium,
                   ),
@@ -602,29 +613,31 @@ class _ClassDetailScreenState extends ConsumerState<ClassDetailScreen> {
                               color: AppColors.blue,
                             ),
                             const SizedBox(width: AppSpace.sm),
-                            Text(
+                            AcademicText(
                               'Siswa',
                               style: Theme.of(context).textTheme.titleLarge,
                             ),
                           ],
                         ),
                         const SizedBox(height: AppSpace.md),
-                        Text(
+                        AcademicText(
                           '${snapshot.data!.studentCount} siswa aktif',
                           style: Theme.of(context).textTheme.headlineSmall,
                         ),
                         const SizedBox(height: AppSpace.xs),
-                        const Text(
+                        const AcademicText(
                           'Lihat, cari, dan ubah data siswa kelas ini.',
                         ),
                         const SizedBox(height: AppSpace.base),
                         FilledButton.icon(
                           onPressed: () async {
-                            await context.push('/kelas/${widget.id}/siswa');
+                            await context.push(
+                              periodPath(context, '/kelas/${widget.id}/siswa'),
+                            );
                             if (mounted) setState(() => revision++);
                           },
                           icon: const Icon(Icons.arrow_forward),
-                          label: const Text('Kelola siswa'),
+                          label: const AcademicText('Kelola siswa'),
                         ),
                       ],
                     ),

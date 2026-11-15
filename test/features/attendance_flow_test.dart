@@ -1,3 +1,4 @@
+import 'package:presensiku/core/education/education_level.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -24,7 +25,8 @@ void main() {
       ),
     ))!;
     await tester.runAsync(() async {
-      await ProfileRepository(app.database).save(name: 'Budi');
+      await ProfileRepository(app.database)
+          .save(educationLevel: EducationLevel.smp, name: 'Budi');
       final classes = ClassRepository(app.database);
       final roster = RosterRepository(app.database);
       final period = await classes.createPeriod(

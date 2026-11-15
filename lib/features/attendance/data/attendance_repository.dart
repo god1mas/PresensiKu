@@ -69,6 +69,7 @@ class AttendanceRepository {
     required int subjectId,
     required String date,
     required int meetingNumber,
+    int? periodId,
   }) async {
     if (meetingNumber <= 0) {
       throw const FormatException('Nomor pertemuan harus lebih dari nol.');
@@ -81,10 +82,10 @@ class AttendanceRepository {
     }
     return database.transaction((txn) async {
       final classes = await txn.rawQuery(
-        '''SELECT c.name, c.period_id, p.year_label, p.semester
-        FROM school_class c JOIN academic_period p ON p.id = c.period_id
-        WHERE c.id = ? AND c.archived_at IS NULL AND p.is_active = 1 AND p.archived_at IS NULL''',
-        [classId],
+        '''SELECT c.name, p.id AS period_id, p.year_label, p.semester
+        FROM school_class c JOIN class_period cp ON cp.class_id = c.id JOIN academic_period p ON p.id = cp.period_id
+        WHERE c.id = ? AND c.archived_at IS NULL AND ((? IS NULL AND p.is_active = 1) OR p.id = ?) AND p.archived_at IS NULL''',
+        [classId, periodId, periodId],
       );
       if (classes.isEmpty) throw StateError('Pilih kelas aktif.');
       final subjects = await txn.rawQuery(
@@ -99,8 +100,14 @@ class AttendanceRepository {
       final existing = await txn.query(
         'attendance_session',
         columns: ['id', 'state'],
-        where: 'class_id = ? AND subject_id = ? AND date = ? AND meeting_number = ?',
-        whereArgs: [classId, subjectId, date, meetingNumber],
+        where: 'class_id = ? AND subject_id = ? AND period_id = ? AND date = ? AND meeting_number = ?',
+        whereArgs: [
+          classId,
+          subjectId,
+          classes.single['period_id'],
+          date,
+          meetingNumber,
+        ],
         limit: 1,
       );
       if (existing.isNotEmpty) {
@@ -112,7 +119,7 @@ class AttendanceRepository {
       }
       final students = await txn.query(
         'student',
-        columns: ['id', 'name', 'attendance_number'],
+        columns: ['id', 'name', 'attendance_number', 'nis'],
         where: 'class_id = ? AND archived_at IS NULL',
         whereArgs: [classId],
         orderBy: 'attendance_number',
@@ -142,6 +149,7 @@ class AttendanceRepository {
           'status': null,
           'student_name_snapshot': student['name'],
           'attendance_number_snapshot': student['attendance_number'],
+          'identifier_snapshot': student['nis'],
           'created_at': now,
           'updated_at': now,
         });

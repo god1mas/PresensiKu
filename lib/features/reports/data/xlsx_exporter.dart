@@ -1,3 +1,5 @@
+import '../../../core/education/education_level.dart';
+
 import 'dart:typed_data';
 
 import 'package:excel/excel.dart';
@@ -8,6 +10,7 @@ class XlsxExporter {
   const XlsxExporter();
 
   Uint8List build(ReportData report) {
+    final terms = EducationTerms(report.educationLevel);
     final workbook = Excel.createExcel();
     final detail = workbook['Detail Absensi'];
     final summary = workbook['Rekap Absensi'];
@@ -15,10 +18,10 @@ class XlsxExporter {
 
     detail.appendRow([
       TextCellValue('No. Absen'),
-      TextCellValue('Nama Siswa'),
-      TextCellValue('NIS/NISN'),
+      TextCellValue(terms.translate('Nama Siswa')),
+      TextCellValue(terms.translate('NIS/NISN')),
       TextCellValue('Kelas'),
-      TextCellValue('Mata Pelajaran'),
+      TextCellValue(terms.translate('Mata Pelajaran')),
       TextCellValue('Tanggal'),
       TextCellValue('Pertemuan'),
       TextCellValue('Status'),
@@ -38,7 +41,7 @@ class XlsxExporter {
 
     summary.appendRow([
       TextCellValue('No. Absen'),
-      TextCellValue('Nama Siswa'),
+      TextCellValue(terms.translate('Nama Siswa')),
       TextCellValue('Total H'),
       TextCellValue('Total S'),
       TextCellValue('Total I'),

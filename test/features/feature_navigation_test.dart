@@ -1,3 +1,4 @@
+import 'package:presensiku/core/education/education_level.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -22,7 +23,9 @@ void main() {
       ),
     ))!;
     await tester.runAsync(
-      () => ProfileRepository(app.database).save(name: 'Guru'),
+      () =>
+          ProfileRepository(app.database)
+              .save(educationLevel: EducationLevel.smp, name: 'Guru'),
     );
     await tester.pumpWidget(
       ProviderScope(
@@ -68,7 +71,9 @@ void main() {
     );
     await tester.pumpAndSettle();
     expect(
-      find.text('Pilih kelas dan mata pelajaran untuk melihat rekap nilai.'),
+      find.text(
+        'Pilih periode, kelas dan mata pelajaran untuk melihat rekap nilai.',
+      ),
       findsOneWidget,
     );
     await tester.binding.handlePopRoute();

@@ -1,3 +1,4 @@
+import 'package:presensiku/core/education/academic_scope.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -116,7 +117,9 @@ class _GradingDestinationScreenState
       body: FutureBuilder<List<List<Map<String, Object?>>>>(
         future: Future.wait([
           db.query('academic_period', orderBy: 'id DESC'),
-          db.query('school_class', orderBy: 'name COLLATE NOCASE'),
+          db.rawQuery(
+            'SELECT c.*, cp.period_id AS scope_period_id FROM school_class c JOIN class_period cp ON cp.class_id = c.id ORDER BY c.name COLLATE NOCASE',
+          ),
           db.query('subject', orderBy: 'name COLLATE NOCASE'),
         ]),
         builder: (context, snapshot) {
@@ -130,7 +133,14 @@ class _GradingDestinationScreenState
           }
           final periods = snapshot.data![0];
           final classes = snapshot.data![1]
-              .where((row) => periodId == null || row['period_id'] == periodId)
+              .where(
+                (row) => periodId == null || row['scope_period_id'] == periodId,
+              )
+              .fold<Map<int, Map<String, Object?>>>(
+                {},
+                (map, row) => map..[row['id'] as int] = row,
+              )
+              .values
               .toList();
           final subjects = snapshot.data![2];
           return ListView(
@@ -138,9 +148,7 @@ class _GradingDestinationScreenState
             children: [
               DropdownButtonFormField<int?>(
                 initialValue: periodId,
-                decoration: const InputDecoration(
-                  labelText: 'Periode akademik',
-                ),
+                decoration: InputDecoration(labelText: 'Periode akademik'),
                 items: [
                   const DropdownMenuItem<int?>(
                     value: null,
@@ -162,7 +170,7 @@ class _GradingDestinationScreenState
               DropdownButtonFormField<int?>(
                 key: ValueKey('class:$periodId:$classId'),
                 initialValue: classId,
-                decoration: const InputDecoration(labelText: 'Kelas'),
+                decoration: InputDecoration(labelText: 'Kelas'),
                 items: [
                   const DropdownMenuItem<int?>(
                     value: null,
@@ -183,11 +191,14 @@ class _GradingDestinationScreenState
               DropdownButtonFormField<int?>(
                 key: ValueKey('subject:$classId:$subjectId'),
                 initialValue: subjectId,
-                decoration: const InputDecoration(labelText: 'Mata pelajaran'),
+                decoration: InputDecoration(
+                  labelText: educationTerms(context)
+                      .translate('Mata pelajaran'),
+                ),
                 items: [
                   const DropdownMenuItem<int?>(
                     value: null,
-                    child: Text('Semua mata pelajaran'),
+                    child: AcademicText('Semua mata pelajaran'),
                   ),
                   for (final row in subjects)
                     DropdownMenuItem(
@@ -200,9 +211,11 @@ class _GradingDestinationScreenState
               const SizedBox(height: AppSpace.base),
               if (widget.history)
                 TextField(
-                  decoration: const InputDecoration(
+                  decoration: InputDecoration(
                     prefixIcon: Icon(Icons.search),
-                    hintText: 'Cari penilaian, kelas, atau mata pelajaran',
+                    hintText: educationTerms(
+                      context,
+                    ).translate('Cari penilaian, kelas, atau mata pelajaran'),
                   ),
                   onChanged: (value) => setState(() => search = value),
                 ),
@@ -303,7 +316,7 @@ class _GradingDestinationScreenState
                               ),
                               trailing: const Icon(Icons.chevron_right),
                               onTap: () => context.push(
-                                '${gradingPath(row['class_id'] as int, row['subject_id'] as int)}/penilaian/${row['id']}',
+                                '${gradingPath(row['class_id'] as int, row['subject_id'] as int)}/penilaian/${row['id']}?periode=${row['period_id']}',
                               ),
                             ),
                           ),
@@ -311,17 +324,17 @@ class _GradingDestinationScreenState
                     );
                   },
                 )
-              else if (classId != null && subjectId != null)
+              else if (classId != null && subjectId != null && periodId != null)
                 FilledButton.icon(
                   onPressed: () => context.push(
-                    '${gradingPath(classId!, subjectId!)}/rekap',
+                    '${gradingPath(classId!, subjectId!)}/rekap?periode=$periodId',
                   ),
                   icon: const Icon(Icons.assessment_outlined),
                   label: const Text('Buka Rekap Penilaian'),
                 )
               else
-                const Text(
-                  'Pilih kelas dan mata pelajaran untuk melihat rekap nilai.',
+                const AcademicText(
+                  'Pilih periode, kelas dan mata pelajaran untuk melihat rekap nilai.',
                 ),
             ],
           );

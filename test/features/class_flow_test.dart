@@ -1,3 +1,4 @@
+import 'package:presensiku/core/education/education_level.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -22,7 +23,9 @@ void main() {
       ),
     ))!;
     await tester.runAsync(
-      () => ProfileRepository(db.database).save(name: 'Budi'),
+      () =>
+          ProfileRepository(db.database)
+              .save(educationLevel: EducationLevel.smp, name: 'Budi'),
     );
 
     await tester.pumpWidget(

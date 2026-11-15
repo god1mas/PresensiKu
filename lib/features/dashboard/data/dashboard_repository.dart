@@ -70,24 +70,26 @@ class DashboardRepository {
   Future<DashboardSummary> load() async {
     final counts = await Future.wait([
       _count('''SELECT count(*) FROM school_class c
-        JOIN academic_period p ON p.id = c.period_id
+        JOIN class_period cp ON cp.class_id = c.id JOIN academic_period p ON p.id = cp.period_id
         WHERE c.archived_at IS NULL AND p.is_active = 1'''),
       _count(
         '''SELECT count(*) FROM student s
         JOIN school_class c ON c.id = s.class_id
-        JOIN academic_period p ON p.id = c.period_id
+        JOIN class_period cp ON cp.class_id = c.id JOIN academic_period p ON p.id = cp.period_id
         WHERE s.archived_at IS NULL AND c.archived_at IS NULL AND p.is_active = 1''',
       ),
-      _count('SELECT count(*) FROM subject WHERE archived_at IS NULL'),
       _count(
-        "SELECT count(*) FROM attendance_session WHERE state = 'completed'",
+        '''SELECT count(DISTINCT s.id) FROM subject s JOIN class_subject cs ON cs.subject_id = s.id JOIN school_class c ON c.id = cs.class_id JOIN class_period cp ON cp.class_id = c.id JOIN academic_period p ON p.id = cp.period_id WHERE s.archived_at IS NULL AND cs.archived_at IS NULL AND c.archived_at IS NULL AND p.is_active = 1''',
+      ),
+      _count(
+        "SELECT count(*) FROM attendance_session WHERE state = 'completed' AND period_id IN (SELECT id FROM academic_period WHERE is_active = 1)",
       ),
     ]);
     final classRows = await database.rawQuery(
       '''SELECT c.id, c.name, c.color_index, count(s.id) AS student_count
          FROM school_class c
          LEFT JOIN student s ON s.class_id = c.id AND s.archived_at IS NULL
-         JOIN academic_period p ON p.id = c.period_id
+         JOIN class_period cp ON cp.class_id = c.id JOIN academic_period p ON p.id = cp.period_id
          WHERE c.archived_at IS NULL AND p.is_active = 1
          GROUP BY c.id
          ORDER BY c.name COLLATE NOCASE
@@ -96,7 +98,7 @@ class DashboardRepository {
     final sessionRows = await database.query(
       'attendance_session',
       columns: ['id', 'class_name_snapshot', 'subject_name_snapshot', 'date'],
-      where: "state = 'completed'",
+      where: "state = 'completed' AND period_id IN (SELECT id FROM academic_period WHERE is_active = 1)",
       orderBy: 'date DESC, meeting_number DESC',
       limit: 3,
     );

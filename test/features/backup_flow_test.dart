@@ -1,3 +1,5 @@
+import 'package:presensiku/core/education/education_level.dart';
+
 import 'dart:typed_data';
 
 import 'package:flutter/material.dart';
@@ -23,7 +25,8 @@ void main() {
       ),
     ))!;
     await tester.runAsync(() async {
-      await ProfileRepository(source.database).save(name: 'Cadangan');
+      await ProfileRepository(source.database)
+          .save(educationLevel: EducationLevel.smp, name: 'Cadangan');
     });
     final backupBytes = (await tester.runAsync(
       () => BackupRepository(source.database).create(),
@@ -37,7 +40,8 @@ void main() {
       ),
     ))!;
     await tester.runAsync(() async {
-      await ProfileRepository(app.database).save(name: 'Sekarang');
+      await ProfileRepository(app.database)
+          .save(educationLevel: EducationLevel.smp, name: 'Sekarang');
     });
     Uint8List? saved;
     final delivery = BackupDelivery(

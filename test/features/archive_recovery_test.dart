@@ -1,3 +1,5 @@
+import 'package:presensiku/core/education/education_level.dart';
+
 import 'dart:io';
 
 import 'package:flutter_test/flutter_test.dart';
@@ -22,7 +24,8 @@ void main() {
       addTearDown(() => directory.delete(recursive: true));
       final path = p.join(directory.path, 'app.db');
       var app = await AppDatabase.open(factory: databaseFactoryFfi, path: path);
-      await ProfileRepository(app.database).save(name: 'Guru');
+      await ProfileRepository(app.database)
+          .save(educationLevel: EducationLevel.smp, name: 'Guru');
       final classes = ClassRepository(app.database);
       final period = await classes.createPeriod(
         yearLabel: '2026/2027',

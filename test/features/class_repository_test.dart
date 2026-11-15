@@ -10,51 +10,75 @@ import 'package:sqflite_common_ffi/sqflite_ffi.dart';
 void main() {
   sqfliteFfiInit();
 
-  test('periods isolate classes and active period can switch', () async {
-    final db = await AppDatabase.open(
-      factory: databaseFactoryFfi,
-      path: inMemoryDatabasePath,
-    );
-    addTearDown(db.close);
-    final repository = ClassRepository(db.database);
-    final first = await repository.createPeriod(
-      yearLabel: '2026/2027',
-      semester: 'ganjil',
-    );
-    final second = await repository.createPeriod(
-      yearLabel: '2026/2027',
-      semester: 'genap',
-    );
-    expect(
-      (await repository.periods()).singleWhere((p) => p.id == first).isActive,
-      isTrue,
-    );
-    await repository.createClass(periodId: first, name: 'VII A');
-    await repository.createClass(periodId: second, name: 'VII B');
-    expect((await repository.classes(first)).single.colorIndex, 0);
-    expect((await repository.classes(second)).single.colorIndex, 1);
-    expect((await repository.classes(first)).single.name, 'VII A');
-    expect((await repository.classes(second)).single.name, 'VII B');
-    expect((await DashboardRepository(db.database).load()).classCount, 1);
-    expect(
-      (await DashboardRepository(db.database).load()).classes.single.name,
-      'VII A',
-    );
-    await repository.activatePeriod(second);
-    expect(
-      (await repository.periods()).singleWhere((p) => p.id == second).isActive,
-      isTrue,
-    );
-    expect(
-      (await repository.periods()).singleWhere((p) => p.id == first).isActive,
-      isFalse,
-    );
-    expect((await repository.classes(first)).single.name, 'VII A');
-    expect(
-      (await DashboardRepository(db.database).load()).classes.single.name,
-      'VII B',
-    );
-  });
+  test(
+    'school classes remain visible in both semesters of one academic year',
+    () async {
+      final db = await AppDatabase.open(
+        factory: databaseFactoryFfi,
+        path: inMemoryDatabasePath,
+      );
+      addTearDown(db.close);
+      final repository = ClassRepository(db.database);
+      final first = await repository.createPeriod(
+        yearLabel: '2026/2027',
+        semester: 'ganjil',
+      );
+      final second = await repository.createPeriod(
+        yearLabel: '2026/2027',
+        semester: 'genap',
+      );
+      expect(
+        (await repository.periods()).singleWhere((p) => p.id == first).isActive,
+        isTrue,
+      );
+      await repository.createClass(periodId: first, name: 'VII A');
+      await repository.createClass(periodId: second, name: 'VII B');
+      expect((await repository.classes(first)).map((c) => c.colorIndex), [
+        0,
+        1,
+      ]);
+      expect((await repository.classes(second)).map((c) => c.colorIndex), [
+        0,
+        1,
+      ]);
+      expect((await repository.classes(first)).map((c) => c.name), [
+        'VII A',
+        'VII B',
+      ]);
+      expect((await repository.classes(second)).map((c) => c.name), [
+        'VII A',
+        'VII B',
+      ]);
+      expect((await DashboardRepository(db.database).load()).classCount, 2);
+      expect(
+        (await DashboardRepository(
+          db.database,
+        ).load()).classes.map((c) => c.name),
+        ['VII A', 'VII B'],
+      );
+      await repository.activatePeriod(second);
+      expect(
+        (await repository.periods())
+            .singleWhere((p) => p.id == second)
+            .isActive,
+        isTrue,
+      );
+      expect(
+        (await repository.periods()).singleWhere((p) => p.id == first).isActive,
+        isFalse,
+      );
+      expect((await repository.classes(first)).map((c) => c.name), [
+        'VII A',
+        'VII B',
+      ]);
+      expect(
+        (await DashboardRepository(
+          db.database,
+        ).load()).classes.map((c) => c.name),
+        ['VII A', 'VII B'],
+      );
+    },
+  );
 
   test(
     'class search, rename, duplicate rejection and archive persist',
@@ -84,7 +108,7 @@ void main() {
       );
       await expectLater(
         first.createClass(periodId: period, name: ' vii b '),
-        throwsA(isA<DatabaseException>()),
+        throwsFormatException,
       );
       await firstDb.close();
 

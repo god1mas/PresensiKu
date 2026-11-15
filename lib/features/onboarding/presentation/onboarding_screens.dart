@@ -1,9 +1,11 @@
+import 'package:presensiku/core/education/academic_scope.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../core/design/tokens.dart';
+import '../../../core/education/education_level.dart';
 import '../data/profile_repository.dart';
 
 class SplashScreen extends ConsumerStatefulWidget {
@@ -25,7 +27,7 @@ class _SplashScreenState extends ConsumerState<SplashScreen> {
     try {
       final profile = await ref.read(profileRepositoryProvider).load();
       if (!mounted) return;
-      context.go(profile == null ? '/onboarding' : '/beranda');
+      context.go(profile?.educationLevel == null ? '/onboarding' : '/beranda');
     } catch (_) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
@@ -83,7 +85,7 @@ class _SplashScreenState extends ConsumerState<SplashScreen> {
                 ),
               ),
               const SizedBox(height: 30),
-              Text(
+              AcademicText(
                 'Dibuat untuk rutinitas guru yang lebih praktis.',
                 style: Theme.of(context).textTheme.bodySmall
                     ?.copyWith(color: AppColors.muted),
@@ -110,6 +112,39 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
   final _nameController = TextEditingController();
   final _schoolController = TextEditingController();
   bool _saving = false;
+  bool _loading = true;
+  bool _existing = false;
+  EducationLevel? _level;
+
+  @override
+  void initState() {
+    super.initState();
+    _load();
+  }
+
+  Future<void> _load() async {
+    try {
+      final profile = await ref.read(profileRepositoryProvider).load();
+      if (!mounted) return;
+      setState(() {
+        _existing = profile != null;
+        _nameController.text = profile?.name ?? '';
+        _schoolController.text = profile?.schoolName ?? '';
+        _level = profile?.educationLevel;
+        _loading = false;
+      });
+    } catch (_) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text(
+              'Profil belum dapat dimuat. Buka kembali halaman ini.',
+            ),
+          ),
+        );
+      }
+    }
+  }
 
   @override
   void dispose() {
@@ -124,7 +159,11 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
     try {
       await ref
           .read(profileRepositoryProvider)
-          .save(name: _nameController.text, schoolName: _schoolController.text);
+          .save(
+            name: _nameController.text,
+            schoolName: _schoolController.text,
+            educationLevel: _level,
+          );
       ref.invalidate(teacherProfileProvider);
       if (!mounted) return;
       context.go('/beranda');
@@ -187,12 +226,14 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
                         ),
                         const SizedBox(height: AppSpace.lg),
                         Text(
-                          'Kenalan dulu, yuk!',
+                          _existing ? 'Lengkapi profil' : 'Kenalan dulu, yuk!',
                           style: Theme.of(context).textTheme.headlineMedium
                               ?.copyWith(fontSize: 32),
                         ),
                         Text(
-                          'Biar lebih personal, isi nama kamu dulu.',
+                          _existing
+                              ? 'Nama dan institusi sebelumnya tetap tersimpan.'
+                              : 'Isi nama lengkap dan jenjang pendidikan kamu.',
                           style: Theme.of(context).textTheme.bodyMedium,
                         ),
                         const SizedBox(height: AppSpace.xl),
@@ -226,7 +267,7 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
                                     ),
                                     const SizedBox(height: AppSpace.sm),
                                     Text(
-                                      'Data siswa tetap di HP.',
+                                      'Data tetap di HP.',
                                       style: Theme.of(context)
                                           .textTheme
                                           .bodyMedium
@@ -239,7 +280,36 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
                           ),
                         ),
                         const SizedBox(height: AppSpace.xl),
-                        const Text('Nama guru'),
+                        DropdownButtonFormField<EducationLevel>(
+                          key: ValueKey(_level),
+                          initialValue: _level,
+                          isExpanded: true,
+                          decoration: const InputDecoration(
+                            labelText: 'Jenjang pendidikan',
+                          ),
+                          items: EducationLevel.values
+                              .map(
+                                (level) => DropdownMenuItem(
+                                  value: level,
+                                  child: Text(level.label),
+                                ),
+                              )
+                              .toList(),
+                          onChanged: (level) => setState(() => _level = level),
+                          validator: (level) =>
+                              level == null ? 'Pilih jenjang pendidikan' : null,
+                        ),
+                        if (_existing)
+                          const Padding(
+                            padding: EdgeInsets.symmetric(
+                              vertical: AppSpace.base,
+                            ),
+                            child: Text(
+                              'Jenjang berlaku untuk kelas baru. Model akademik dan riwayat kelas lama tetap dipertahankan.',
+                            ),
+                          ),
+                        const SizedBox(height: AppSpace.lg),
+                        const Text('Nama lengkap'),
                         const SizedBox(height: AppSpace.sm),
                         TextFormField(
                           controller: _nameController,
@@ -250,11 +320,11 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
                           ),
                           validator: (value) =>
                               value == null || value.trim().isEmpty
-                              ? 'Nama guru wajib diisi'
+                              ? 'Nama lengkap wajib diisi'
                               : null,
                         ),
                         const SizedBox(height: AppSpace.lg),
-                        const Text('Nama sekolah (opsional)'),
+                        const AcademicText('Nama sekolah/institusi (opsional)'),
                         const SizedBox(height: AppSpace.sm),
                         TextFormField(
                           controller: _schoolController,
@@ -271,7 +341,7 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
                 ),
               ),
               FilledButton(
-                onPressed: _saving ? null : _save,
+                onPressed: _saving || _loading ? null : _save,
                 child: _saving
                     ? const SizedBox(
                         width: 20,

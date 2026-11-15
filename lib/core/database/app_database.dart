@@ -9,7 +9,7 @@ final appDatabaseProvider = Provider<AppDatabase>((ref) {
 class AppDatabase {
   AppDatabase._(this.database);
 
-  static const schemaVersion = 3;
+  static const schemaVersion = 5;
   final Database database;
 
   static Future<AppDatabase> open({
@@ -100,7 +100,7 @@ class AppDatabase {
         created_at TEXT NOT NULL,
         updated_at TEXT NOT NULL,
         completed_at TEXT,
-        UNIQUE (class_id, subject_id, date, meeting_number)
+        UNIQUE (class_id, subject_id, period_id, date, meeting_number)
       )''',
       '''CREATE TABLE attendance_record (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -128,6 +128,8 @@ class AppDatabase {
       await db.execute(statement);
     }
     await _createGradingSchema(db);
+    await _createEducationSchema(db);
+    await _createAcademicSchema(db, rebuildAttendance: false);
   }
 
   static Future<void> _upgradeSchema(
@@ -143,6 +145,151 @@ class AppDatabase {
         'ALTER TABLE school_class ADD COLUMN color_index INTEGER NOT NULL DEFAULT 0 CHECK (color_index BETWEEN 0 AND 8)',
       );
       await db.execute('UPDATE school_class SET color_index = (id - 1) % 9');
+    }
+    if (oldVersion < 4 && newVersion >= 4) {
+      await _createEducationSchema(db);
+    }
+    if (oldVersion < 5 && newVersion >= 5) {
+      await _createAcademicSchema(db, rebuildAttendance: true);
+    }
+    if ((await db.rawQuery('PRAGMA foreign_key_check')).isNotEmpty) {
+      throw StateError('Migrasi dibatalkan: relasi database tidak valid.');
+    }
+  }
+
+  static Future<void> _createAcademicSchema(
+    Database db, {
+    required bool rebuildAttendance,
+  }) async {
+    await db.execute(
+      'CREATE TABLE academic_year (id INTEGER PRIMARY KEY AUTOINCREMENT, label TEXT NOT NULL UNIQUE)',
+    );
+    await db.execute(
+      'ALTER TABLE academic_period ADD COLUMN year_id INTEGER REFERENCES academic_year(id) ON DELETE RESTRICT',
+    );
+    await populateAcademicYears(db);
+    await db.execute(
+      '''CREATE TRIGGER period_year_insert AFTER INSERT ON academic_period BEGIN
+      INSERT OR IGNORE INTO academic_year(label) VALUES (NEW.year_label);
+      UPDATE academic_period SET year_id = (SELECT id FROM academic_year WHERE label = NEW.year_label) WHERE id = NEW.id AND year_id IS NULL;
+      SELECT CASE WHEN NOT EXISTS (SELECT 1 FROM academic_year y JOIN academic_period p ON p.year_id = y.id WHERE p.id = NEW.id AND y.label = p.year_label) THEN RAISE(ABORT, 'Academic year mismatch') END;
+    END''',
+    );
+    await db.execute('''CREATE VIEW class_period AS
+      SELECT c.id AS class_id, p.id AS period_id
+      FROM school_class c
+      JOIN academic_period origin ON origin.id = c.period_id
+      JOIN academic_period p ON
+        (c.education_level = 'university' AND p.id = c.period_id) OR
+        (c.education_level != 'university' AND p.year_id = origin.year_id)''');
+    if (rebuildAttendance) {
+      // Rebuild parent and child together inside sqflite's upgrade transaction.
+      // FK enforcement remains enabled; every row and primary key is copied.
+      final definitions = await db.rawQuery(
+        "SELECT name, sql FROM sqlite_master WHERE type = 'table' AND name IN ('attendance_session', 'attendance_record')",
+      );
+      final indexes = await db.rawQuery(
+        "SELECT sql FROM sqlite_master WHERE type = 'index' AND tbl_name IN ('attendance_session', 'attendance_record') AND sql IS NOT NULL",
+      );
+      final sessionSql =
+          definitions.firstWhere(
+                (r) => r['name'] == 'attendance_session',
+              )['sql']
+              as String;
+      final recordSql =
+          definitions.firstWhere((r) => r['name'] == 'attendance_record')['sql']
+              as String;
+      final rewritten = sessionSql
+          .replaceFirst('attendance_session', 'attendance_session_new')
+          .replaceAll(
+            RegExp(
+              r'UNIQUE\s*\(\s*class_id\s*,\s*subject_id\s*,\s*date\s*,\s*meeting_number\s*\)',
+              caseSensitive: false,
+            ),
+            'UNIQUE (class_id, subject_id, period_id, date, meeting_number)',
+          );
+      await db.execute(rewritten);
+      await db.execute(
+        'INSERT INTO attendance_session_new SELECT * FROM attendance_session',
+      );
+      await db.execute(
+        'CREATE TEMP TABLE attendance_record_copy AS SELECT * FROM attendance_record',
+      );
+      await db.execute('DROP TABLE attendance_record');
+      await db.execute('DROP TABLE attendance_session');
+      await db.execute(
+        'ALTER TABLE attendance_session_new RENAME TO attendance_session',
+      );
+      await db.execute(recordSql);
+      await db.execute(
+        'INSERT INTO attendance_record SELECT * FROM attendance_record_copy',
+      );
+      await db.execute('DROP TABLE attendance_record_copy');
+      for (final index in indexes) {
+        await db.execute(index['sql'] as String);
+      }
+    }
+    await db.execute(
+      'ALTER TABLE attendance_record ADD COLUMN identifier_snapshot TEXT',
+    );
+    await db.execute(
+      'ALTER TABLE assessment_grade ADD COLUMN identifier_snapshot TEXT',
+    );
+    await populateIdentifierSnapshots(db);
+  }
+
+  static Future<void> populateAcademicYears(DatabaseExecutor db) async {
+    await db.execute(
+      'INSERT OR IGNORE INTO academic_year(label) SELECT DISTINCT year_label FROM academic_period',
+    );
+    await db.execute(
+      'UPDATE academic_period SET year_id = (SELECT id FROM academic_year WHERE label = academic_period.year_label) WHERE year_id IS NULL',
+    );
+  }
+
+  static Future<void> populateIdentifierSnapshots(DatabaseExecutor db) async {
+    for (final table in ['attendance_record', 'assessment_grade']) {
+      await db.execute(
+        'UPDATE $table SET identifier_snapshot = (SELECT nis FROM student WHERE student.id = $table.student_id) WHERE identifier_snapshot IS NULL',
+      );
+    }
+  }
+
+  static Future<void> _createEducationSchema(Database db) async {
+    await db.execute(
+      'ALTER TABLE teacher_profile ADD COLUMN education_level TEXT CHECK (education_level IN (\'tk\', \'sd\', \'smp\', \'sma\', \'university\'))',
+    );
+    await db.execute(
+      "ALTER TABLE school_class ADD COLUMN education_level TEXT NOT NULL DEFAULT 'legacy_school' CHECK (education_level IN ('legacy_school', 'tk', 'sd', 'smp', 'sma', 'university'))",
+    );
+    await db.execute('''CREATE TABLE student_identity (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      name TEXT NOT NULL,
+      institution TEXT NOT NULL DEFAULT '',
+      nim TEXT,
+      created_at TEXT NOT NULL,
+      UNIQUE (institution, nim)
+    )''');
+    await db.execute(
+      'ALTER TABLE student ADD COLUMN identity_id INTEGER REFERENCES student_identity(id) ON DELETE RESTRICT',
+    );
+    await populateStudentIdentities(db);
+  }
+
+  /// Legacy names/identifiers are deliberately not used to guess identity merges.
+  static Future<void> populateStudentIdentities(DatabaseExecutor db) async {
+    final rows = await db.query('student', where: 'identity_id IS NULL');
+    for (final row in rows) {
+      final id = await db.insert('student_identity', {
+        'name': row['name'],
+        'created_at': row['created_at'],
+      });
+      await db.update(
+        'student',
+        {'identity_id': id},
+        where: 'id = ?',
+        whereArgs: [row['id']],
+      );
     }
   }
 

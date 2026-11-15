@@ -298,8 +298,15 @@ class GradingRepository {
         final row = <String, Object?>{
           'state': grade.state == GradeState.exempt ? 'EXEMPT' : 'GRADED',
           'score': grade.state == GradeState.exempt ? null : score,
-          'student_name_snapshot': student['name'],
-          'attendance_number_snapshot': student['attendance_number'],
+          'student_name_snapshot': existing.isEmpty
+              ? student['name']
+              : existing.single['student_name_snapshot'],
+          'attendance_number_snapshot': existing.isEmpty
+              ? student['attendance_number']
+              : existing.single['attendance_number_snapshot'],
+          'identifier_snapshot': existing.isEmpty
+              ? student['nis']
+              : existing.single['identifier_snapshot'],
           'updated_at': now,
         };
         if (existing.isEmpty) {
@@ -505,7 +512,12 @@ class GradingRepository {
     final schoolClass = await _one(txn, 'school_class', classId);
     final subject = await _one(txn, 'subject', subjectId);
     final period = await _one(txn, 'academic_period', periodId);
-    if (schoolClass['period_id'] != periodId ||
+    final scopes = await txn.query(
+      'class_period',
+      where: 'class_id = ? AND period_id = ?',
+      whereArgs: [classId, periodId],
+    );
+    if (scopes.isEmpty ||
         schoolClass['archived_at'] != null ||
         subject['archived_at'] != null ||
         period['archived_at'] != null) {

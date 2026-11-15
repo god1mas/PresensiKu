@@ -81,7 +81,16 @@ class ClassRepository {
         columns: ['id'],
         limit: 1,
       );
+      await txn.insert('academic_year', {
+        'label': year,
+      }, conflictAlgorithm: ConflictAlgorithm.ignore);
+      final academicYear = (await txn.query(
+        'academic_year',
+        where: 'label = ?',
+        whereArgs: [year],
+      )).single['id'];
       return txn.insert('academic_period', {
+        'year_id': academicYear,
         'year_label': year,
         'semester': semester,
         'is_active': existing.isEmpty ? 1 : 0,
@@ -121,7 +130,7 @@ class ClassRepository {
       SELECT c.id, c.period_id, c.name, c.color_index, COUNT(s.id) AS student_count
       FROM school_class c
       LEFT JOIN student s ON s.class_id = c.id AND s.archived_at IS NULL
-      WHERE c.period_id = ? AND c.archived_at IS NULL
+      WHERE c.id IN (SELECT class_id FROM class_period WHERE period_id = ?) AND c.archived_at IS NULL
         AND (? = '' OR lower(c.name) LIKE ?)
       GROUP BY c.id
       ORDER BY lower(c.name)
@@ -175,13 +184,39 @@ class ClassRepository {
       throw const FormatException('Warna kelas tidak valid.');
     }
     final now = DateTime.now().toIso8601String();
-    return database.insert('school_class', {
-      'period_id': periodId,
-      'name': trimmed,
-      'color_index': selectedColor,
-      'created_at': now,
-      'updated_at': now,
+    final profiles = await database.query('teacher_profile');
+    final level = profiles.isEmpty
+        ? 'legacy_school'
+        : profiles.single['education_level'] ?? 'legacy_school';
+    return database.transaction((txn) async {
+      await _checkName(txn, periodId, trimmed);
+      return txn.insert('school_class', {
+        'education_level': level,
+        'period_id': periodId,
+        'name': trimmed,
+        'color_index': selectedColor,
+        'created_at': now,
+        'updated_at': now,
+      });
     });
+  }
+
+  Future<void> _checkName(
+    DatabaseExecutor txn,
+    int periodId,
+    String name, {
+    int exclude = -1,
+  }) async {
+    final rows = await txn.rawQuery(
+      '''SELECT c.id FROM school_class c JOIN class_period cp ON cp.class_id = c.id
+      WHERE cp.period_id = ? AND c.archived_at IS NULL AND c.id != ? AND lower(trim(c.name)) = lower(trim(?))''',
+      [periodId, exclude, name],
+    );
+    if (rows.isNotEmpty) {
+      throw const FormatException(
+        'Nama kelas sudah digunakan pada lingkup tahun/semester ini.',
+      );
+    }
   }
 
   Future<int> nextColorIndex() async {
@@ -196,6 +231,11 @@ class ClassRepository {
     if (trimmed.isEmpty) throw const FormatException('Nama kelas wajib diisi.');
     if (colorIndex < 0 || colorIndex > 8) {
       throw const FormatException('Warna kelas tidak valid.');
+    }
+    final current = await classById(id);
+    if (current == null) throw StateError('Kelas tidak ditemukan.');
+    if (current.name != trimmed) {
+      await _checkName(database, current.periodId, trimmed, exclude: id);
     }
     final changed = await database.update(
       'school_class',
@@ -213,6 +253,11 @@ class ClassRepository {
   Future<void> renameClass(int id, String name) async {
     final trimmed = name.trim();
     if (trimmed.isEmpty) throw const FormatException('Nama kelas wajib diisi.');
+    final current = await classById(id);
+    if (current == null) throw StateError('Kelas tidak ditemukan.');
+    if (current.name != trimmed) {
+      await _checkName(database, current.periodId, trimmed, exclude: id);
+    }
     final changed = await database.update(
       'school_class',
       {'name': trimmed, 'updated_at': DateTime.now().toIso8601String()},

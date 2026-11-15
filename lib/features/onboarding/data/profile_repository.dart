@@ -2,17 +2,24 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:sqflite/sqflite.dart';
 
 import '../../../core/database/app_database.dart';
+import '../../../core/education/education_level.dart';
 
 class TeacherProfile {
-  const TeacherProfile({required this.name, this.schoolName});
+  const TeacherProfile({
+    required this.name,
+    this.schoolName,
+    this.educationLevel,
+  });
 
   final String name;
   final String? schoolName;
+  final EducationLevel? educationLevel;
 
   factory TeacherProfile.fromMap(Map<String, Object?> map) {
     return TeacherProfile(
       name: map['name'] as String,
       schoolName: map['school_name'] as String?,
+      educationLevel: EducationLevel.parse(map['education_level']),
     );
   }
 }
@@ -39,7 +46,11 @@ class ProfileRepository {
     return rows.isEmpty ? null : TeacherProfile.fromMap(rows.single);
   }
 
-  Future<void> save({required String name, String? schoolName}) async {
+  Future<void> save({
+    required String name,
+    String? schoolName,
+    EducationLevel? educationLevel,
+  }) async {
     final trimmedName = name.trim();
     if (trimmedName.isEmpty) {
       throw ArgumentError.value(name, 'name', 'Nama guru wajib diisi.');
@@ -53,6 +64,7 @@ class ProfileRepository {
           ? null
           : trimmedSchool,
       'updated_at': now,
+      'education_level': (educationLevel ?? existing?.educationLevel)?.name,
     };
     if (existing == null) {
       await database.insert('teacher_profile', {

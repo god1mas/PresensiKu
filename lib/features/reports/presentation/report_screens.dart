@@ -1,3 +1,4 @@
+import 'package:presensiku/core/education/academic_scope.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -125,7 +126,7 @@ class _ReportScreenState extends ConsumerState<ReportScreen> {
                   ],
                 ),
                 const SizedBox(height: AppSpace.xl),
-                Text(
+                AcademicText(
                   'Rekap per siswa',
                   style: Theme.of(context).textTheme.titleLarge,
                 ),
@@ -239,7 +240,7 @@ class _ReportExportScreenState extends ConsumerState<ReportExportScreen> {
           : await delivery.save(filename, bytes);
       if (!delivered) return;
       if (mounted) {
-        await showDialog<void>(
+        await showAcademicDialog<void>(
           context: context,
           builder: (dialogContext) => AlertDialog(
             title: const Text('Ekspor berhasil'),
@@ -383,7 +384,7 @@ class _ReportFilters extends ConsumerWidget {
           builder: (context, snapshot) => DropdownButtonFormField<int?>(
             key: ValueKey('class:$classId:${snapshot.hasData}'),
             initialValue: snapshot.hasData ? classId : null,
-            decoration: const InputDecoration(labelText: 'Pilih kelas'),
+            decoration: InputDecoration(labelText: 'Pilih kelas'),
             items: [
               const DropdownMenuItem<int?>(
                 value: null,
@@ -405,7 +406,9 @@ class _ReportFilters extends ConsumerWidget {
           builder: (context, snapshot) => DropdownButtonFormField<int?>(
             key: ValueKey('subject:$subjectId:${snapshot.hasData}'),
             initialValue: snapshot.hasData ? subjectId : null,
-            decoration: const InputDecoration(labelText: 'Mata pelajaran'),
+            decoration: InputDecoration(
+              labelText: educationTerms(context).translate('Mata pelajaran'),
+            ),
             items: [
               const DropdownMenuItem<int?>(
                 value: null,
@@ -427,7 +430,7 @@ class _ReportFilters extends ConsumerWidget {
           builder: (context, snapshot) => DropdownButtonFormField<int?>(
             key: ValueKey('period:$periodId:${snapshot.hasData}'),
             initialValue: snapshot.hasData ? periodId : null,
-            decoration: const InputDecoration(labelText: 'Periode akademik'),
+            decoration: InputDecoration(labelText: 'Periode akademik'),
             items: [
               const DropdownMenuItem<int?>(
                 value: null,

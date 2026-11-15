@@ -35,6 +35,10 @@ void main() {
     await tester.pumpAndSettle();
     expect(find.text('Kenalan dulu, yuk!'), findsOneWidget);
 
+    await tester.tap(find.text('Jenjang pendidikan'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('SMP/MTs').last);
+    await tester.pumpAndSettle();
     await tester.enterText(find.byType(TextFormField).first, 'Budi Santoso');
     await tester.tap(find.textContaining('Mulai pakai KelasKu'));
     await tester.runAsync(

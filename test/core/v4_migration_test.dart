@@ -1,3 +1,5 @@
+import '../support/legacy_database.dart';
+
 import 'dart:io';
 
 import 'package:flutter_test/flutter_test.dart';
@@ -11,11 +13,28 @@ void main() {
     final directory = await Directory.systemTemp.createTemp('kelasku-color-');
     addTearDown(() => directory.delete(recursive: true));
     final path = '${directory.path}/old.db';
-    final old = await databaseFactoryFfi.openDatabase(path);
-    await old.execute(
-      'CREATE TABLE school_class (id INTEGER PRIMARY KEY, name TEXT NOT NULL)',
+    final legacy = await LegacyDatabase.open(
+      factory: databaseFactoryFfi,
+      path: path,
     );
-    await old.insert('school_class', {'id': 4, 'name': 'VII A'});
+    final old = legacy.database;
+    const now = '2026-11-16';
+    await old.insert('academic_period', {
+      'id': 1,
+      'year_label': '2026/2027',
+      'semester': 'ganjil',
+      'is_active': 1,
+      'created_at': now,
+      'updated_at': now,
+    });
+    await old.insert('school_class', {
+      'id': 4,
+      'period_id': 1,
+      'name': 'VII A',
+      'created_at': now,
+      'updated_at': now,
+    });
+    await old.execute('ALTER TABLE school_class DROP COLUMN color_index');
     await old.setVersion(2);
     await old.close();
 
@@ -24,7 +43,7 @@ void main() {
       path: path,
     );
     addTearDown(upgraded.close);
-    expect(await upgraded.database.getVersion(), 3);
+    expect(await upgraded.database.getVersion(), AppDatabase.schemaVersion);
     final row = (await upgraded.database.query('school_class')).single;
     expect(row['name'], 'VII A');
     expect(row['color_index'], 3);
@@ -36,7 +55,7 @@ void main() {
       path: inMemoryDatabasePath,
     );
     addTearDown(app.close);
-    expect(await app.database.getVersion(), 3);
+    expect(await app.database.getVersion(), AppDatabase.schemaVersion);
     final names = (await app.database.rawQuery(
       "SELECT name FROM sqlite_master WHERE type='table'",
     )).map((row) => row['name']).toSet();
@@ -116,7 +135,7 @@ void main() {
     await old.close();
 
     final app = await AppDatabase.open(factory: databaseFactoryFfi, path: path);
-    expect(await app.database.getVersion(), 3);
+    expect(await app.database.getVersion(), AppDatabase.schemaVersion);
     expect(
       (await app.database.query('attendance_record')).single['status'],
       'H',

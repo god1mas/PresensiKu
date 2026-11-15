@@ -1,3 +1,4 @@
+import 'package:presensiku/core/education/academic_scope.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -44,7 +45,24 @@ Future<_ScopeInfo> _scope(WidgetRef ref, int classId, int subjectId) async {
   if (classes.isEmpty || subjects.isEmpty) {
     throw const FormatException('Kelas atau mata pelajaran tidak ditemukan.');
   }
-  final periodId = classes.single['period_id'] as int;
+  final selected = ref.read(selectedAcademicPeriodProvider);
+  final active = await db.rawQuery(
+    'SELECT p.id FROM academic_period p JOIN class_period cp ON cp.period_id = p.id WHERE cp.class_id = ? AND p.is_active = 1',
+    [classId],
+  );
+  final periodId =
+      selected ??
+      (active.isEmpty
+          ? classes.single['period_id'] as int
+          : active.single['id'] as int);
+  final valid = await db.query(
+    'class_period',
+    where: 'class_id = ? AND period_id = ?',
+    whereArgs: [classId, periodId],
+  );
+  if (valid.isEmpty) {
+    throw const FormatException('Kelas tidak tersedia pada periode ini.');
+  }
   final periods = await db.query(
     'academic_period',
     where: 'id = ?',
@@ -222,9 +240,11 @@ class _SubjectDetailScreenState extends ConsumerState<SubjectDetailScreen> {
             title: 'Detail Mata Pelajaran',
             subtitle: '${scope.subjectName} · ${scope.className}',
             action: FilledButton(
-              onPressed: () => context.push('$path/penilaian').then((_) {
-                if (mounted) setState(() => revision++);
-              }),
+              onPressed: () => context
+                  .push(periodPath(context, '$path/penilaian'))
+                  .then((_) {
+                    if (mounted) setState(() => revision++);
+                  }),
               child: const Text('Buka Penilaian'),
             ),
             children: [
@@ -239,7 +259,7 @@ class _SubjectDetailScreenState extends ConsumerState<SubjectDetailScreen> {
                       scope.subjectName,
                       style: Theme.of(context).textTheme.titleLarge,
                     ),
-                    Text(
+                    AcademicText(
                       '${scope.className} · ${scope.studentCount} siswa · ${scope.periodName}',
                     ),
                   ],
@@ -265,7 +285,10 @@ class _SubjectDetailScreenState extends ConsumerState<SubjectDetailScreen> {
                             icon: Icons.check,
                             color: AppColors.iceBlue,
                             onTap: () => context.push(
-                              '/absensi?kelas=${widget.classId}&mapel=${widget.subjectId}',
+                              periodPath(
+                                context,
+                                '/absensi?kelas=${widget.classId}&mapel=${widget.subjectId}',
+                              ),
                             ),
                           ),
                         ),
@@ -275,7 +298,9 @@ class _SubjectDetailScreenState extends ConsumerState<SubjectDetailScreen> {
                             label: 'Penilaian',
                             icon: Icons.star,
                             color: AppColors.lightGreen,
-                            onTap: () => context.push('$path/penilaian'),
+                            onTap: () => context.push(
+                              periodPath(context, '$path/penilaian'),
+                            ),
                           ),
                         ),
                       ],
@@ -299,8 +324,12 @@ class _SubjectDetailScreenState extends ConsumerState<SubjectDetailScreen> {
                       Text(recent['title'] as String),
                       const SizedBox(height: 8),
                       TextButton(
-                        onPressed: () =>
-                            context.push('$path/penilaian/${recent['id']}'),
+                        onPressed: () => context.push(
+                          periodPath(
+                            context,
+                            '$path/penilaian/${recent['id']}',
+                          ),
+                        ),
                         child: const Text('Lihat nilai ›'),
                       ),
                     ],
@@ -418,9 +447,11 @@ class _AssessmentOverviewScreenState
             title: 'Penilaian ${scope.subjectName}',
             subtitle: '${scope.className} · ${scope.periodName}',
             action: FilledButton(
-              onPressed: () => context.push('$path/penilaian/tambah').then((_) {
-                if (mounted) setState(() => revision++);
-              }),
+              onPressed: () => context
+                  .push(periodPath(context, '$path/penilaian/tambah'))
+                  .then((_) {
+                    if (mounted) setState(() => revision++);
+                  }),
               child: const Text('+ Tambah Penilaian'),
             ),
             children: [
@@ -447,7 +478,7 @@ class _AssessmentOverviewScreenState
                   ),
                 ),
                 const Center(
-                  child: Text(
+                  child: AcademicText(
                     'Buat penilaian pertama untuk mulai mencatat nilai siswa.',
                   ),
                 ),
@@ -484,7 +515,8 @@ class _AssessmentOverviewScreenState
                     title: const Text('Atur Bobot'),
                     subtitle: const Text('Kategori & persentase nilai akhir'),
                     trailing: const Icon(Icons.chevron_right),
-                    onTap: () => context.push('$path/bobot'),
+                    onTap: () =>
+                        context.push(periodPath(context, '$path/bobot')),
                   ),
                 ),
                 Row(
@@ -494,7 +526,8 @@ class _AssessmentOverviewScreenState
                         label: 'Kelola Kategori',
                         icon: Icons.category_outlined,
                         color: AppColors.lavender,
-                        onTap: () => context.push('$path/kategori'),
+                        onTap: () =>
+                            context.push(periodPath(context, '$path/kategori')),
                       ),
                     ),
                     const SizedBox(width: 8),
@@ -503,7 +536,8 @@ class _AssessmentOverviewScreenState
                         label: 'Rekap Nilai',
                         icon: Icons.bar_chart,
                         color: AppColors.iceBlue,
-                        onTap: () => context.push('$path/rekap'),
+                        onTap: () =>
+                            context.push(periodPath(context, '$path/rekap')),
                       ),
                     ),
                   ],
@@ -764,7 +798,7 @@ class _AssessmentFormScreenState extends ConsumerState<AssessmentFormScreen> {
               widget.assessmentId == null ? 'Penilaian baru' : 'Ubah penilaian',
               style: const TextStyle(fontWeight: FontWeight.w700),
             ),
-            Text(
+            AcademicText(
               '${scope.studentCount} siswa kelas ${scope.className} terhubung.',
             ),
           ],
@@ -893,7 +927,7 @@ class _AssessmentDetailScreenState
   }
 
   Future<void> remove() async {
-    final decision = await showDialog<String>(
+    final decision = await showAcademicDialog<String>(
       context: context,
       builder: (dialogContext) => AlertDialog(
         title: const Text('Arsipkan atau hapus penilaian?'),
@@ -972,7 +1006,7 @@ class _AssessmentDetailScreenState
                   .then((_) {
                     if (mounted) setState(() => revision++);
                   }),
-              child: const Text('Edit Nilai Siswa'),
+              child: const AcademicText('Edit Nilai Siswa'),
             ),
             children: [
               _GradeCard(
@@ -1023,7 +1057,7 @@ class _AssessmentDetailScreenState
                       ),
                     ),
                     if (students.isEmpty && grades.isEmpty)
-                      const Text('Belum ada siswa di kelas ini.'),
+                      const AcademicText('Belum ada siswa di kelas ini.'),
                     for (final student in students)
                       ListTile(
                         contentPadding: EdgeInsets.zero,
@@ -1042,7 +1076,7 @@ class _AssessmentDetailScreenState
                       ListTile(
                         contentPadding: EdgeInsets.zero,
                         title: Text(grade['student_name_snapshot'] as String),
-                        subtitle: const Text('Siswa diarsipkan'),
+                        subtitle: const AcademicText('Siswa diarsipkan'),
                         trailing: _Pill(
                           grade['state'] == 'EXEMPT'
                               ? 'EX'
@@ -1157,7 +1191,7 @@ class _GradeEntryScreenState extends ConsumerState<GradeEntryScreen> {
 
   Future<bool> _confirmLeave() async {
     if (!dirty) return true;
-    return await showDialog<bool>(
+    return await showAcademicDialog<bool>(
           context: context,
           builder: (dialogContext) => AlertDialog(
             title: const Text('Perubahan belum disimpan'),
@@ -1261,7 +1295,7 @@ class _GradeEntryScreenState extends ConsumerState<GradeEntryScreen> {
                   '${assessment!['category_name_snapshot']} · Maksimal ${assessment!['max_score']} · ${assessment!['date']}',
                 ),
                 const SizedBox(height: 12),
-                Text(
+                AcademicText(
                   '$filled dari ${students.length} siswa dinilai',
                   style: const TextStyle(
                     color: AppColors.blue,
@@ -1284,7 +1318,7 @@ class _GradeEntryScreenState extends ConsumerState<GradeEntryScreen> {
                 Row(
                   children: [
                     const Expanded(
-                      child: Text(
+                      child: AcademicText(
                         'Nilai siswa',
                         style: TextStyle(
                           fontWeight: FontWeight.w700,
@@ -1296,7 +1330,7 @@ class _GradeEntryScreenState extends ConsumerState<GradeEntryScreen> {
                   ],
                 ),
                 if (students.isEmpty)
-                  const Text('Belum ada siswa aktif di kelas ini.'),
+                  const AcademicText('Belum ada siswa aktif di kelas ini.'),
                 for (final student in students) _gradeRow(student),
               ],
             ),
@@ -1420,7 +1454,7 @@ class _CategoryManagementScreenState
   bool showingArchive = false;
 
   Future<void> _restore(Map<String, Object?> category) async {
-    final confirmed = await showDialog<bool>(
+    final confirmed = await showAcademicDialog<bool>(
       context: context,
       builder: (dialogContext) => AlertDialog(
         title: const Text('Pulihkan kategori?'),
@@ -1463,7 +1497,7 @@ class _CategoryManagementScreenState
     final controller = TextEditingController(
       text: category?['name'] as String? ?? '',
     );
-    final name = await showDialog<String>(
+    final name = await showAcademicDialog<String>(
       context: context,
       builder: (dialogContext) => AlertDialog(
         title: Text(category == null ? 'Tambah Kategori' : 'Ubah Kategori'),
@@ -1502,7 +1536,7 @@ class _CategoryManagementScreenState
   }
 
   Future<void> _archive(Map<String, Object?> category) async {
-    final confirmed = await showDialog<bool>(
+    final confirmed = await showAcademicDialog<bool>(
       context: context,
       builder: (dialogContext) => AlertDialog(
         title: const Text('Arsipkan kategori?'),
@@ -1560,7 +1594,9 @@ class _CategoryManagementScreenState
       children: [
         const _GradeCard(
           color: AppColors.iceBlue,
-          child: Text('Kategori Penilaian\nKategori default dan buatan guru'),
+          child: AcademicText(
+            'Kategori Penilaian\nKategori default dan buatan guru',
+          ),
         ),
         SegmentedButton<bool>(
           segments: const [
@@ -2014,7 +2050,7 @@ class _GradeRecapScreenState extends ConsumerState<GradeRecapScreen> {
         title: 'Rekap Nilai',
         subtitle: '${data.scope.subjectName} · ${data.scope.className}',
         action: FilledButton(
-          onPressed: () => context.push('$path/ekspor'),
+          onPressed: () => context.push(periodPath(context, '$path/ekspor')),
           child: const Text('Ekspor Nilai Excel'),
         ),
         children: [
@@ -2031,7 +2067,7 @@ class _GradeRecapScreenState extends ConsumerState<GradeRecapScreen> {
                   ],
                 ),
                 const SizedBox(height: 12),
-                Text(
+                AcademicText(
                   '${data.scope.periodName} · ${data.students.length} siswa',
                 ),
               ],
@@ -2070,7 +2106,7 @@ class _GradeRecapScreenState extends ConsumerState<GradeRecapScreen> {
           ),
           _GradeCard(
             color: AppColors.lavender,
-            child: Text(
+            child: AcademicText(
               '${finals.length} siswa memiliki nilai akhir lengkap. '
               '${data.students.length - finals.length} siswa masih memiliki nilai sementara atau belum lengkap.',
             ),
@@ -2079,7 +2115,7 @@ class _GradeRecapScreenState extends ConsumerState<GradeRecapScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Text(
+                const AcademicText(
                   'Rekap siswa',
                   style: TextStyle(fontWeight: FontWeight.w700, fontSize: 16),
                 ),
@@ -2105,7 +2141,9 @@ class _GradeRecapScreenState extends ConsumerState<GradeRecapScreen> {
                           ? AppColors.lightGreen
                           : AppColors.yellow,
                     ),
-                    onTap: () => context.push('$path/rekap/${student['id']}'),
+                    onTap: () => context.push(
+                      periodPath(context, '$path/rekap/${student['id']}'),
+                    ),
                   ),
               ],
             ),
@@ -2148,7 +2186,7 @@ class _GradeRecapScreenState extends ConsumerState<GradeRecapScreen> {
                   ListTile(
                     contentPadding: EdgeInsets.zero,
                     title: Text(entry.key),
-                    trailing: Text('${entry.value} siswa'),
+                    trailing: AcademicText('${entry.value} siswa'),
                   ),
               ],
             ),
@@ -2372,7 +2410,7 @@ class _GradeExportScreenState extends ConsumerState<GradeExportScreen> {
       lastWorkbook = bytes;
       lastFilename = filename;
       if (delivered) {
-        await showDialog<void>(
+        await showAcademicDialog<void>(
           context: context,
           builder: (dialogContext) => AlertDialog(
             title: const Text('Ekspor Berhasil'),
@@ -2399,7 +2437,7 @@ class _GradeExportScreenState extends ConsumerState<GradeExportScreen> {
       }
     } catch (_) {
       if (!mounted) return;
-      await showDialog<void>(
+      await showAcademicDialog<void>(
         context: context,
         builder: (dialogContext) => AlertDialog(
           title: const Text('Ekspor Gagal'),
@@ -2474,7 +2512,7 @@ class _GradeExportScreenState extends ConsumerState<GradeExportScreen> {
                 ),
                 ListTile(
                   contentPadding: EdgeInsets.zero,
-                  title: const Text('Mata Pelajaran'),
+                  title: const AcademicText('Mata Pelajaran'),
                   trailing: Text(scope.subjectName),
                 ),
                 ListTile(

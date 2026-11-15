@@ -1,3 +1,4 @@
+import 'package:presensiku/core/education/academic_scope.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -13,7 +14,7 @@ class StudentManagementScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => Scaffold(
-    appBar: AppBar(title: const Text('Daftar siswa')),
+    appBar: AppBar(title: const AcademicText('Daftar siswa')),
     body: ListView(
       padding: const EdgeInsets.all(AppSpace.lg),
       children: [StudentListPanel(classId: classId)],
@@ -44,10 +45,10 @@ class _StudentListPanelState extends ConsumerState<StudentListPanel> {
     var name = student?.name ?? '';
     var number = student?.attendanceNumber.toString() ?? '';
     var nis = student?.nis ?? '';
-    final result = await showDialog<bool>(
+    final result = await showAcademicDialog<bool>(
       context: context,
       builder: (dialogContext) => AlertDialog(
-        title: Text(student == null ? 'Tambah siswa' : 'Ubah siswa'),
+        title: AcademicText(student == null ? 'Tambah siswa' : 'Ubah siswa'),
         content: SingleChildScrollView(
           child: Column(
             mainAxisSize: MainAxisSize.min,
@@ -55,21 +56,26 @@ class _StudentListPanelState extends ConsumerState<StudentListPanel> {
               TextFormField(
                 initialValue: name,
                 onChanged: (value) => name = value,
-                decoration: const InputDecoration(labelText: 'Nama lengkap'),
+                decoration: InputDecoration(
+                  labelText: educationTerms(context).university
+                      ? 'Nama Lengkap Mahasiswa'
+                      : 'Nama lengkap',
+                ),
               ),
               const SizedBox(height: AppSpace.base),
               TextFormField(
                 initialValue: number,
                 onChanged: (value) => number = value,
                 keyboardType: TextInputType.number,
-                decoration: const InputDecoration(labelText: 'Nomor absen'),
+                decoration: InputDecoration(labelText: 'Nomor absen'),
               ),
               const SizedBox(height: AppSpace.base),
               TextFormField(
                 initialValue: nis,
                 onChanged: (value) => nis = value,
-                decoration: const InputDecoration(
-                  labelText: 'NIS/NISN (opsional)',
+                decoration: InputDecoration(
+                  labelText: educationTerms(context)
+                      .translate('NIS/NISN (opsional)'),
                 ),
               ),
             ],
@@ -79,11 +85,11 @@ class _StudentListPanelState extends ConsumerState<StudentListPanel> {
           if (student != null)
             TextButton(
               onPressed: () async {
-                final confirmed = await showDialog<bool>(
+                final confirmed = await showAcademicDialog<bool>(
                   context: dialogContext,
                   builder: (confirmContext) => AlertDialog(
-                    title: const Text('Arsipkan siswa?'),
-                    content: const Text(
+                    title: const AcademicText('Arsipkan siswa?'),
+                    content: const AcademicText(
                       'Siswa akan disembunyikan dari daftar aktif. Riwayat absensi tetap tersimpan.',
                     ),
                     actions: [
@@ -166,12 +172,12 @@ class _StudentListPanelState extends ConsumerState<StudentListPanel> {
             Row(
               children: [
                 Expanded(
-                  child: Text(
+                  child: AcademicText(
                     'Daftar siswa',
                     style: Theme.of(context).textTheme.titleLarge,
                   ),
                 ),
-                Text(
+                AcademicText(
                   '${students.length} siswa',
                   style: const TextStyle(color: AppColors.blue),
                 ),
@@ -180,14 +186,14 @@ class _StudentListPanelState extends ConsumerState<StudentListPanel> {
             const SizedBox(height: AppSpace.base),
             TextField(
               onChanged: (value) => setState(() => search = value),
-              decoration: const InputDecoration(
+              decoration: InputDecoration(
                 prefixIcon: Icon(Icons.search),
-                hintText: 'Cari nama siswa',
+                hintText: educationTerms(context).translate('Cari nama siswa'),
               ),
             ),
             const SizedBox(height: AppSpace.base),
             if (snapshot.hasError)
-              const Text('Daftar siswa belum dapat dimuat.')
+              const AcademicText('Daftar siswa belum dapat dimuat.')
             else if (!snapshot.hasData)
               const Center(child: CircularProgressIndicator())
             else if (students.isEmpty)
@@ -207,7 +213,9 @@ class _StudentListPanelState extends ConsumerState<StudentListPanel> {
                   ),
                   title: Text(student.name),
                   subtitle: Text(
-                    'No. ${student.attendanceNumber.toString().padLeft(2, '0')}',
+                    educationTerms(context).university
+                        ? 'NIM ${student.nis ?? 'belum diisi'} ? No. ${student.attendanceNumber}'
+                        : 'No. ${student.attendanceNumber.toString().padLeft(2, '0')}',
                   ),
                   trailing: IconButton(
                     onPressed: () => editStudent(student),
@@ -223,7 +231,7 @@ class _StudentListPanelState extends ConsumerState<StudentListPanel> {
               width: double.infinity,
               child: FilledButton(
                 onPressed: editStudent,
-                child: const Text('+ Tambah siswa'),
+                child: const AcademicText('+ Tambah siswa'),
               ),
             ),
           ],
@@ -256,7 +264,7 @@ class _ClassSubjectPanelState extends ConsumerState<ClassSubjectPanel> {
         child: ListView(
           shrinkWrap: true,
           children: [
-            const ListTile(title: Text('Atur mata pelajaran kelas')),
+            const ListTile(title: AcademicText('Atur mata pelajaran kelas')),
             for (final subject in linked)
               ListTile(
                 leading: const Icon(Icons.book_outlined, color: AppColors.blue),
@@ -306,10 +314,10 @@ class _ClassSubjectPanelState extends ConsumerState<ClassSubjectPanel> {
               ),
             ListTile(
               leading: const Icon(Icons.add),
-              title: const Text('Kelola mata pelajaran'),
+              title: const AcademicText('Kelola mata pelajaran'),
               onTap: () {
                 Navigator.pop(sheetContext);
-                context.push('/mata-pelajaran').then((_) {
+                context.push(periodPath(context, '/mata-pelajaran')).then((_) {
                   if (mounted) setState(() => revision++);
                 });
               },
@@ -342,7 +350,7 @@ class _ClassSubjectPanelState extends ConsumerState<ClassSubjectPanel> {
                 const Icon(Icons.menu_book_outlined, color: AppColors.blue),
                 const SizedBox(width: AppSpace.sm),
                 Expanded(
-                  child: Text(
+                  child: AcademicText(
                     'Mata pelajaran',
                     style: Theme.of(context).textTheme.titleLarge,
                   ),
@@ -359,11 +367,11 @@ class _ClassSubjectPanelState extends ConsumerState<ClassSubjectPanel> {
             ),
             const SizedBox(height: AppSpace.md),
             if (snapshot.hasError)
-              const Text('Mata pelajaran belum dapat dimuat.')
+              const AcademicText('Mata pelajaran belum dapat dimuat.')
             else if (!snapshot.hasData)
               const Center(child: CircularProgressIndicator())
             else if (subjects.isEmpty)
-              const Text('Belum ada mata pelajaran untuk kelas ini.')
+              const AcademicText('Belum ada mata pelajaran untuk kelas ini.')
             else
               for (final subject in subjects) ...[
                 Material(
@@ -372,7 +380,10 @@ class _ClassSubjectPanelState extends ConsumerState<ClassSubjectPanel> {
                   child: InkWell(
                     borderRadius: BorderRadius.circular(AppRadius.card),
                     onTap: () => context.push(
-                      '/kelas/${widget.classId}/mapel/${subject.id}',
+                      periodPath(
+                        context,
+                        '/kelas/${widget.classId}/mapel/${subject.id}',
+                      ),
                     ),
                     child: Padding(
                       padding: const EdgeInsets.all(AppSpace.base),
@@ -419,10 +430,10 @@ class _SubjectScreenState extends ConsumerState<SubjectScreen> {
   bool showingArchive = false;
 
   Future<void> restore(Subject subject) async {
-    final confirmed = await showDialog<bool>(
+    final confirmed = await showAcademicDialog<bool>(
       context: context,
       builder: (dialogContext) => AlertDialog(
-        title: const Text('Pulihkan mata pelajaran?'),
+        title: const AcademicText('Pulihkan mata pelajaran?'),
         content: Text(
           '${subject.name} dan relasi kelas yang masih berlaku akan diaktifkan kembali.',
         ),
@@ -445,7 +456,7 @@ class _SubjectScreenState extends ConsumerState<SubjectScreen> {
       if (mounted) {
         setState(() => revision++);
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Mata pelajaran dipulihkan.')),
+          const SnackBar(content: AcademicText('Mata pelajaran dipulihkan.')),
         );
       }
     } catch (error) {
@@ -458,7 +469,7 @@ class _SubjectScreenState extends ConsumerState<SubjectScreen> {
 
   Future<void> edit([Subject? subject]) async {
     var name = subject?.name ?? '';
-    final result = await showDialog<bool>(
+    final result = await showAcademicDialog<bool>(
       context: context,
       builder: (dialogContext) => AlertDialog(
         title: Text(
@@ -467,7 +478,9 @@ class _SubjectScreenState extends ConsumerState<SubjectScreen> {
         content: TextFormField(
           initialValue: name,
           onChanged: (value) => name = value,
-          decoration: const InputDecoration(labelText: 'Nama mata pelajaran'),
+          decoration: InputDecoration(
+            labelText: educationTerms(context).translate('Nama mata pelajaran'),
+          ),
         ),
         actions: [
           if (subject != null)
@@ -512,7 +525,7 @@ class _SubjectScreenState extends ConsumerState<SubjectScreen> {
 
   @override
   Widget build(BuildContext context) => Scaffold(
-    appBar: AppBar(title: const Text('Mata pelajaran')),
+    appBar: AppBar(title: const AcademicText('Mata pelajaran')),
     body: FutureBuilder<List<Subject>>(
       key: ValueKey(revision),
       future: ref
@@ -521,7 +534,7 @@ class _SubjectScreenState extends ConsumerState<SubjectScreen> {
       builder: (context, snapshot) {
         if (snapshot.hasError) {
           return const Center(
-            child: Text('Mata pelajaran belum dapat dimuat.'),
+            child: AcademicText('Mata pelajaran belum dapat dimuat.'),
           );
         }
         if (!snapshot.hasData) {
@@ -551,7 +564,7 @@ class _SubjectScreenState extends ConsumerState<SubjectScreen> {
                     color: AppColors.blue,
                   ),
                   const SizedBox(width: AppSpace.lg),
-                  Text(
+                  AcademicText(
                     '${subjects.length} mata pelajaran',
                     style: Theme.of(context).textTheme.titleLarge,
                   ),
@@ -610,7 +623,7 @@ class _SubjectScreenState extends ConsumerState<SubjectScreen> {
             padding: const EdgeInsets.all(AppSpace.lg),
             child: FilledButton(
               onPressed: edit,
-              child: const Text('+ Tambah mata pelajaran'),
+              child: const AcademicText('+ Tambah mata pelajaran'),
             ),
           ),
   );

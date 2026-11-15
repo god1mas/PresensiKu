@@ -93,6 +93,9 @@ void main() {
         for (final table in BackupRepository.legacyTables)
           table: allData[table],
       };
+      for (final row in legacyData['student'] as List) {
+        (row as Map).remove('identity_id');
+      }
       envelope['schemaVersion'] = 1;
       envelope['data'] = legacyData;
       envelope['sha256'] = sha256
@@ -242,5 +245,6 @@ Future<(int, int, int, int, int)> _seed(AppDatabase app) async {
     'created_at': now,
     'updated_at': now,
   });
+  await AppDatabase.populateStudentIdentities(db);
   return (schoolClass, subject, period, first, second);
 }

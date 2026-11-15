@@ -1,3 +1,5 @@
+import '../../../core/education/education_level.dart';
+
 import 'dart:typed_data';
 
 import 'package:excel/excel.dart';
@@ -9,6 +11,16 @@ class GradeXlsxExporter {
   const GradeXlsxExporter();
 
   Uint8List build(GradeReportData report) {
+    final terms = EducationTerms(report.educationLevel);
+    List<CellValue?> headers(List<String> values) => _headers(
+      values
+          .map(
+            (v) => terms.translate(
+              v == 'No. Absen' && terms.university ? 'NIM' : v,
+            ),
+          )
+          .toList(),
+    );
     final workbook = Excel.createExcel();
     final detail = workbook['Detail Penilaian'];
     final categories = workbook['Rekap per Kategori'];
@@ -24,7 +36,7 @@ class GradeXlsxExporter {
         .join('; ');
 
     detail.appendRow(
-      _headers([
+      headers([
         'Kelas',
         'Mata Pelajaran',
         'Tahun',
@@ -56,7 +68,7 @@ class GradeXlsxExporter {
           TextCellValue(assessment['title'] as String),
           TextCellValue(assessment['bab'] as String? ?? ''),
           DoubleCellValue((assessment['max_score'] as num).toDouble()),
-          IntCellValue(student['attendance_number'] as int),
+          _identifier(report, student),
           TextCellValue(
             grade?['student_name_snapshot'] as String? ??
                 student['name'] as String,
@@ -67,7 +79,7 @@ class GradeXlsxExporter {
     }
 
     categories.appendRow(
-      _headers([
+      headers([
         'Kelas',
         'Mata Pelajaran',
         'Tahun',
@@ -96,7 +108,7 @@ class GradeXlsxExporter {
           TextCellValue(report.subjectName),
           TextCellValue(report.yearLabel),
           TextCellValue(semester),
-          IntCellValue(student['attendance_number'] as int),
+          _identifier(report, student),
           TextCellValue(student['name'] as String),
           TextCellValue(
             report.categories[categoryId] ?? 'Kategori $categoryId',
@@ -110,7 +122,7 @@ class GradeXlsxExporter {
     }
 
     finalSheet.appendRow(
-      _headers([
+      headers([
         'Kelas',
         'Mata Pelajaran',
         'Tahun',
@@ -131,7 +143,7 @@ class GradeXlsxExporter {
         TextCellValue(report.subjectName),
         TextCellValue(report.yearLabel),
         TextCellValue(semester),
-        IntCellValue(student['attendance_number'] as int),
+        _identifier(report, student),
         TextCellValue(student['name'] as String),
         TextCellValue(weightLabel),
         result?.finalGrade == null
@@ -167,6 +179,11 @@ class GradeXlsxExporter {
     }
     return Uint8List.fromList(bytes);
   }
+
+  CellValue _identifier(GradeReportData report, Map<String, Object?> student) =>
+      report.educationLevel == EducationLevel.university
+      ? TextCellValue(student['nis'] as String? ?? '')
+      : IntCellValue(student['attendance_number'] as int);
 
   List<CellValue?> _headers(List<String> values) => [
     for (final value in values) TextCellValue(value),
@@ -252,8 +269,14 @@ class GradeXlsxExporter {
       sheet.setMergedCellStyle(cell(column, 0), groupedStyle);
     }
 
-    verticalHeader(0, 'No. Absen');
-    verticalHeader(1, 'Nama Siswa');
+    verticalHeader(
+      0,
+      report.educationLevel == EducationLevel.university ? 'NIM' : 'No. Absen',
+    );
+    verticalHeader(
+      1,
+      EducationTerms(report.educationLevel).translate('Nama Siswa'),
+    );
     sheet.setColumnWidth(0, 13);
     sheet.setColumnWidth(1, 30);
     var column = 2;
@@ -320,12 +343,7 @@ class GradeXlsxExporter {
         topBorder: border,
         bottomBorder: border,
       );
-      write(
-        0,
-        row,
-        IntCellValue(student['attendance_number'] as int),
-        bodyStyle,
-      );
+      write(0, row, _identifier(report, student), bodyStyle);
       write(
         1,
         row,

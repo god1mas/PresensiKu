@@ -1,3 +1,5 @@
+import 'package:presensiku/core/education/education_level.dart';
+
 import 'dart:typed_data';
 
 import 'package:flutter/material.dart';
@@ -43,7 +45,8 @@ void main() {
       ),
     ))!;
     await tester.runAsync(() async {
-      await ProfileRepository(app.database).save(name: 'Budi');
+      await ProfileRepository(app.database)
+          .save(educationLevel: EducationLevel.smp, name: 'Budi');
       final classes = ClassRepository(app.database);
       final roster = RosterRepository(app.database);
       final period = await classes.createPeriod(

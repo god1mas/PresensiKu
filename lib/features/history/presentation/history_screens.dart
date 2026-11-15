@@ -1,3 +1,4 @@
+import 'package:presensiku/core/education/academic_scope.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -63,9 +64,10 @@ class _HistoryScreenState extends ConsumerState<HistoryScreen> {
             padding: const EdgeInsets.symmetric(horizontal: AppSpace.lg),
             child: TextField(
               onChanged: (value) => setState(() => search = value),
-              decoration: const InputDecoration(
+              decoration: InputDecoration(
                 prefixIcon: Icon(Icons.search),
-                hintText: 'Cari kelas atau mata pelajaran',
+                hintText: educationTerms(context)
+                    .translate('Cari kelas atau mata pelajaran'),
               ),
             ),
           ),
@@ -222,7 +224,7 @@ class _HistoryDetailScreenState extends ConsumerState<HistoryDetailScreen> {
   bool editing = false;
 
   Future<void> changeStatus(AttendanceRecord record) async {
-    final selected = await showDialog<String>(
+    final selected = await showAcademicDialog<String>(
       context: context,
       builder: (dialogContext) => SimpleDialog(
         title: Text('Ubah kehadiran ${record.name}'),
@@ -296,7 +298,7 @@ class _HistoryDetailScreenState extends ConsumerState<HistoryDetailScreen> {
                     session.date,
                     style: Theme.of(context).textTheme.titleLarge,
                   ),
-                  Text('${session.records.length} siswa tercatat'),
+                  AcademicText('${session.records.length} siswa tercatat'),
                 ],
               ),
             ),
@@ -339,7 +341,7 @@ class _HistoryDetailScreenState extends ConsumerState<HistoryDetailScreen> {
             Row(
               children: [
                 Expanded(
-                  child: Text(
+                  child: AcademicText(
                     'Kehadiran siswa',
                     style: Theme.of(context).textTheme.titleLarge,
                   ),

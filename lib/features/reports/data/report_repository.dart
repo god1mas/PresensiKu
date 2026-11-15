@@ -1,3 +1,5 @@
+import '../../../core/education/education_level.dart';
+
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:sqflite/sqflite.dart';
 
@@ -68,7 +70,12 @@ class StudentSummary {
 }
 
 class ReportData {
-  const ReportData({required this.details, required this.summaries});
+  const ReportData({
+    required this.details,
+    required this.summaries,
+    this.educationLevel,
+  });
+  final EducationLevel? educationLevel;
   final List<ReportDetail> details;
   final List<StudentSummary> summaries;
 }
@@ -102,11 +109,12 @@ class ReportRepository {
     }
     final rows = await database.rawQuery('''
       SELECT rec.student_id, rec.attendance_number_snapshot, rec.student_name_snapshot,
-        student.nis, sess.class_name_snapshot, sess.subject_name_snapshot,
+        c.education_level, rec.identifier_snapshot AS nis, sess.class_name_snapshot, sess.subject_name_snapshot,
         sess.date, sess.meeting_number, rec.status
       FROM attendance_record rec
       JOIN attendance_session sess ON sess.id = rec.session_id
       JOIN student ON student.id = rec.student_id
+      JOIN school_class c ON c.id = sess.class_id
       WHERE ${where.join(' AND ')}
       ORDER BY sess.date DESC, sess.meeting_number DESC, sess.id DESC, rec.attendance_number_snapshot
     ''', args);
@@ -148,6 +156,14 @@ class ReportRepository {
           final byNumber = a.number.compareTo(b.number);
           return byNumber != 0 ? byNumber : a.name.compareTo(b.name);
         });
-    return ReportData(details: details, summaries: summaries);
+    return ReportData(
+      details: details,
+      summaries: summaries,
+      educationLevel:
+          rows.isNotEmpty &&
+              rows.every((r) => r['education_level'] == 'university')
+          ? EducationLevel.university
+          : null,
+    );
   }
 }

@@ -26,9 +26,10 @@ class _PeriodSettingsScreenState extends ConsumerState<PeriodSettingsScreen> {
     super.dispose();
   }
 
-  Future<void> save(List<AcademicPeriod> periods) async {
+  Future<void> save() async {
     setState(() => busy = true);
     try {
+      final periods = await ref.read(classRepositoryProvider).periods();
       final cleaned = year.text.trim().replaceAll(' ', '');
       final repository = ref.read(classRepositoryProvider);
       final existing = periods
@@ -36,6 +37,27 @@ class _PeriodSettingsScreenState extends ConsumerState<PeriodSettingsScreen> {
             (item) => item.yearLabel == cleaned && item.semester == semester,
           )
           .firstOrNull;
+      if (!mounted) return;
+      final confirmed = await showDialog<bool>(
+        context: context,
+        builder: (dialogContext) => AlertDialog(
+          title: const Text('Jadikan periode aktif?'),
+          content: Text(
+            '$cleaned / $semester\nRiwayat tetap tersimpan. Presensi, penilaian, dan bobot mengikuti semester yang dipilih.',
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(dialogContext, false),
+              child: const Text('Batal'),
+            ),
+            FilledButton(
+              onPressed: () => Navigator.pop(dialogContext, true),
+              child: const Text('Jadikan Aktif'),
+            ),
+          ],
+        ),
+      );
+      if (confirmed != true) return;
       final id =
           existing?.id ??
           await repository.createPeriod(yearLabel: cleaned, semester: semester);
@@ -104,7 +126,7 @@ class _PeriodSettingsScreenState extends ConsumerState<PeriodSettingsScreen> {
                     const Text('TAHUN AKTIF'),
                     const SizedBox(height: AppSpace.sm),
                     Text(
-                      active?.yearLabel ?? 'Belum ada periode',
+                      active?.label ?? 'Belum ada periode',
                       style: Theme.of(context).textTheme.headlineMedium,
                     ),
                   ],
@@ -150,13 +172,26 @@ class _PeriodSettingsScreenState extends ConsumerState<PeriodSettingsScreen> {
                 for (final item in periods)
                   ListTile(
                     title: Text(item.label),
+                    selected:
+                        item.yearLabel == year.text.trim() &&
+                        item.semester == semester,
+                    subtitle: Text(
+                      item.isActive
+                          ? 'Aktif'
+                          : item.yearLabel == year.text.trim() &&
+                                item.semester == semester
+                          ? 'Dipilih - belum aktif'
+                          : 'Ketuk untuk memilih',
+                    ),
                     trailing: item.isActive
                         ? const Icon(Icons.check_circle, color: AppColors.blue)
                         : null,
-                    onTap: () => setState(() {
-                      year.text = item.yearLabel;
-                      semester = item.semester;
-                    }),
+                    onTap: busy
+                        ? null
+                        : () => setState(() {
+                            year.text = item.yearLabel;
+                            semester = item.semester;
+                          }),
                   ),
               ],
             ],
@@ -167,13 +202,8 @@ class _PeriodSettingsScreenState extends ConsumerState<PeriodSettingsScreen> {
         child: Padding(
           padding: const EdgeInsets.all(AppSpace.lg),
           child: FilledButton(
-            onPressed: busy
-                ? null
-                : () async {
-                    final periods = await repository.periods();
-                    await save(periods);
-                  },
-            child: const Text('Simpan periode'),
+            onPressed: busy ? null : save,
+            child: Text(busy ? 'Menyimpan...' : 'Jadikan Aktif'),
           ),
         ),
       ),

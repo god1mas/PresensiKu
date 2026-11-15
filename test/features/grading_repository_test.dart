@@ -210,7 +210,7 @@ Future<_Ids> _seed(AppDatabase app) async {
     'updated_at': now,
   });
   final otherPeriod = await db.insert('academic_period', {
-    'year_label': '2026/2027',
+    'year_label': '2027/2028',
     'semester': 'genap',
     'is_active': 0,
     'created_at': now,

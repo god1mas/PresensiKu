@@ -41,10 +41,10 @@ class RosterRepository {
       SELECT s.id, s.class_id, s.name, s.attendance_number, s.nis
       FROM student s JOIN school_class c ON c.id = s.class_id
       WHERE s.class_id = ? AND s.archived_at IS NULL AND c.archived_at IS NULL
-        AND (? = '' OR lower(s.name) LIKE ? OR CAST(s.attendance_number AS TEXT) LIKE ?)
+        AND (? = '' OR lower(s.name) LIKE ? OR CAST(s.attendance_number AS TEXT) LIKE ? OR (length(?) >= 3 AND s.nis LIKE ?))
       ORDER BY s.attendance_number, lower(s.name)
     ''',
-      [classId, term, '%$term%', '%$term%'],
+      [classId, term, '%$term%', '%$term%', term, '%$term%'],
     );
     return rows
         .map(
@@ -71,13 +71,17 @@ class RosterRepository {
       throw const FormatException('Nomor absen harus lebih dari nol.');
     }
     final now = DateTime.now().toIso8601String();
-    return database.insert('student', {
-      'class_id': classId,
-      'name': trimmed,
-      'attendance_number': attendanceNumber,
-      'nis': nis?.trim().isEmpty == true ? null : nis?.trim(),
-      'created_at': now,
-      'updated_at': now,
+    return database.transaction((txn) async {
+      final identity = await _identity(txn, classId, trimmed, nis);
+      return txn.insert('student', {
+        'identity_id': identity,
+        'class_id': classId,
+        'name': trimmed,
+        'attendance_number': attendanceNumber,
+        'nis': nis?.trim().isEmpty == true ? null : nis?.trim(),
+        'created_at': now,
+        'updated_at': now,
+      });
     });
   }
 
@@ -92,18 +96,114 @@ class RosterRepository {
     if (attendanceNumber <= 0) {
       throw const FormatException('Nomor absen harus lebih dari nol.');
     }
-    final changed = await database.update(
-      'student',
-      {
-        'name': trimmed,
-        'attendance_number': attendanceNumber,
-        'nis': nis?.trim().isEmpty == true ? null : nis?.trim(),
-        'updated_at': DateTime.now().toIso8601String(),
-      },
+    await database.transaction((txn) async {
+      final rows = await txn.query(
+        'student',
+        where: 'id = ? AND archived_at IS NULL',
+        whereArgs: [id],
+      );
+      if (rows.isEmpty) throw StateError('Siswa tidak ditemukan.');
+      final row = rows.single;
+      final identity = await _identity(
+        txn,
+        row['class_id'] as int,
+        trimmed,
+        nis,
+        existing: row,
+      );
+      await txn.update(
+        'student',
+        {
+          'name': trimmed,
+          'attendance_number': attendanceNumber,
+          'nis': nis?.trim().isEmpty == true ? null : nis?.trim(),
+          'identity_id': identity,
+          'updated_at': DateTime.now().toIso8601String(),
+        },
+        where: 'id = ?',
+        whereArgs: [id],
+      );
+    });
+  }
+
+  Future<int> _identity(
+    DatabaseExecutor txn,
+    int classId,
+    String name,
+    String? identifier, {
+    Map<String, Object?>? existing,
+  }) async {
+    final classes = await txn.query(
+      'school_class',
       where: 'id = ? AND archived_at IS NULL',
-      whereArgs: [id],
+      whereArgs: [classId],
     );
-    if (changed == 0) throw StateError('Siswa tidak ditemukan.');
+    if (classes.isEmpty) throw const FormatException('Kelas tidak aktif.');
+    final university = classes.single['education_level'] == 'university';
+    final nim = identifier?.trim() ?? '';
+    if (!university) {
+      return existing?['identity_id'] as int? ??
+          await txn.insert('student_identity', {
+            'name': name,
+            'created_at': DateTime.now().toIso8601String(),
+          });
+    }
+    // Existing imported enrollment without NIM can still be corrected; new
+    // enrollment always requires it. Historical snapshots are never rewritten.
+    if (nim.isEmpty &&
+        existing != null &&
+        (existing['nis'] == null || existing['nis'] == '')) {
+      return existing['identity_id'] as int;
+    }
+    if (nim.isEmpty) throw const FormatException('NIM wajib diisi.');
+    final duplicates = await txn.query(
+      'student',
+      where: 'class_id = ? AND nis = ? AND archived_at IS NULL AND id != ?',
+      whereArgs: [classId, nim, existing?['id'] ?? -1],
+    );
+    if (duplicates.isNotEmpty) {
+      throw const FormatException('NIM sudah terdaftar di kelas ini.');
+    }
+    // Institution is frozen on identity creation. Reuse an existing enrollment's
+    // institution so a profile edit cannot silently move its identity.
+    final profiles = await txn.query('teacher_profile');
+    var institution = profiles.isEmpty
+        ? ''
+        : (profiles.single['school_name'] as String? ?? '')
+              .trim()
+              .toLowerCase();
+    if (existing?['identity_id'] != null) {
+      final old = await txn.query(
+        'student_identity',
+        where: 'id = ?',
+        whereArgs: [existing!['identity_id']],
+      );
+      if (old.isNotEmpty && old.single['nim'] != null) {
+        institution = old.single['institution'] as String;
+      }
+    }
+    final identities = await txn.query(
+      'student_identity',
+      where: 'institution = ? AND nim = ?',
+      whereArgs: [institution, nim],
+    );
+    if (identities.isNotEmpty) {
+      final identity = identities.single;
+      if ((identity['name'] as String).trim().toLowerCase() !=
+              name.toLowerCase() &&
+          identity['id'] != existing?['identity_id']) {
+        throw const FormatException(
+          'NIM sudah terkait dengan nama lain. Periksa identitas mahasiswa.',
+        );
+      }
+      return identity['id'] as int;
+    }
+    return txn.insert('student_identity', {
+      'name': name,
+      'institution': institution,
+      'nim': nim,
+      'created_at': DateTime.now().toIso8601String(),
+    });
   }
 
   Future<void> archiveStudent(int id) async {

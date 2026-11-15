@@ -1,3 +1,5 @@
+import '../../../core/education/education_level.dart';
+
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:sqflite/sqflite.dart';
 
@@ -12,6 +14,7 @@ final gradeReportRepositoryProvider = Provider<GradeReportRepository>((ref) {
 class GradeReportData {
   const GradeReportData({
     required this.className,
+    this.educationLevel,
     required this.subjectName,
     required this.yearLabel,
     required this.semester,
@@ -23,6 +26,7 @@ class GradeReportData {
     required this.results,
   });
 
+  final EducationLevel? educationLevel;
   final String className;
   final String subjectName;
   final String yearLabel;
@@ -46,7 +50,7 @@ class GradeReportRepository {
   }) async {
     final classes = await database.query(
       'school_class',
-      where: 'id = ? AND period_id = ?',
+      where: 'id = ? AND id IN (SELECT class_id FROM class_period WHERE period_id = ?)',
       whereArgs: [classId, periodId],
     );
     final subjects = await database.query(
@@ -89,6 +93,20 @@ class GradeReportRepository {
         grades[(assessment['id'] as int, grade['student_id'] as int)] = grade;
       }
     }
+    final historicalStudents = [
+      for (final student in students) Map<String, Object?>.from(student),
+    ];
+    for (final student in historicalStudents) {
+      for (final assessment in assessments) {
+        final grade = grades[(assessment['id'] as int, student['id'] as int)];
+        if (grade != null) {
+          student['name'] = grade['student_name_snapshot'];
+          student['attendance_number'] = grade['attendance_number_snapshot'];
+          student['nis'] = grade['identifier_snapshot'];
+          break;
+        }
+      }
+    }
     final assessmentValues = [
       for (final assessment in assessments)
         AssessmentValue(
@@ -118,11 +136,12 @@ class GradeReportRepository {
       );
     }
     return GradeReportData(
+      educationLevel: EducationLevel.parse(classes.single['education_level']),
       className: classes.single['name'] as String,
       subjectName: subjects.single['name'] as String,
       yearLabel: periods.single['year_label'] as String,
       semester: periods.single['semester'] as String,
-      students: students,
+      students: historicalStudents,
       assessments: assessments,
       categories: categories,
       weights: weights,

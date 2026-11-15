@@ -1,3 +1,5 @@
+import 'package:presensiku/core/education/education_level.dart';
+
 import 'dart:convert';
 import 'dart:typed_data';
 
@@ -23,7 +25,8 @@ void main() {
         path: inMemoryDatabasePath,
       );
       addTearDown(source.close);
-      await ProfileRepository(source.database).save(name: 'Guru');
+      await ProfileRepository(source.database)
+          .save(educationLevel: EducationLevel.smp, name: 'Guru');
       final classes = ClassRepository(source.database);
       final period = await classes.createPeriod(
         yearLabel: '2026/2027',
@@ -51,6 +54,12 @@ void main() {
       for (final row in data['school_class'] as List) {
         (row as Map<String, dynamic>).remove('color_index');
       }
+      data.removeWhere(
+        (key, _) => !BackupRepository.version3Tables.contains(key),
+      );
+      for (final row in data['student'] as List) {
+        (row as Map).remove('identity_id');
+      }
       envelope['schemaVersion'] = 2;
       envelope['sha256'] = sha256
           .convert(utf8.encode(jsonEncode(data)))
@@ -72,8 +81,11 @@ void main() {
         path: inMemoryDatabasePath,
       );
       addTearDown(source.close);
-      await ProfileRepository(source.database)
-          .save(name: 'Ibu Sari', schoolName: 'SMP Harapan');
+      await ProfileRepository(source.database).save(
+        educationLevel: EducationLevel.smp,
+        name: 'Ibu Sari',
+        schoolName: 'SMP Harapan',
+      );
       final classes = ClassRepository(source.database);
       final roster = RosterRepository(source.database);
       final period = await classes.createPeriod(
@@ -112,7 +124,8 @@ void main() {
         path: inMemoryDatabasePath,
       );
       addTearDown(target.close);
-      await ProfileRepository(target.database).save(name: 'Data lama');
+      await ProfileRepository(target.database)
+          .save(educationLevel: EducationLevel.smp, name: 'Data lama');
       final backup = BackupRepository(target.database);
       final preview = backup.inspect(bytes);
       expect(preview.teacherName, 'Ibu Sari');
@@ -146,7 +159,8 @@ void main() {
         path: inMemoryDatabasePath,
       );
       addTearDown(app.close);
-      await ProfileRepository(app.database).save(name: 'Tetap aman');
+      await ProfileRepository(app.database)
+          .save(educationLevel: EducationLevel.smp, name: 'Tetap aman');
       final backup = BackupRepository(app.database);
       final valid = await backup.create();
       final decoded = jsonDecode(utf8.decode(valid)) as Map<String, dynamic>;
@@ -182,7 +196,8 @@ void main() {
       path: inMemoryDatabasePath,
     );
     addTearDown(app.close);
-    await ProfileRepository(app.database).save(name: 'Tetap aman');
+    await ProfileRepository(app.database)
+        .save(educationLevel: EducationLevel.smp, name: 'Tetap aman');
     final backup = BackupRepository(app.database);
     final encoded =
         jsonDecode(utf8.decode(await backup.create())) as Map<String, dynamic>;
