@@ -39,25 +39,25 @@ Version 1.4.2 adds offline Panduan Penggunaan and Tentang KelasKu under Pengatur
 
 ## Install and use
 
-KelasKu 1.4.1 (code 6) production-signed APK: `C:\Project\PresensiKu\releases\production\KelasKu-v1.4.1-production.apk` (59,588,113 bytes). Package: `com.presensiku.presensiku`; Android 7.0 / API 24 or later. APK SHA-256: `3CD07324E1E50B6288938F2FB8763B1871F2C887B2E264AF4FFE9D77E91B24F8`. The preserved 1.4.0+5 QA APK is `C:\Project\PresensiKu\build\app\outputs\flutter-apk\KelasKu-1.4.0+5-qa.apk`. See [v1.4.1 release notes](RELEASE_NOTES_1.4.1.md) for certificate fingerprints and validation.
+KelasKu 1.4.2 (code 7) production-signed APK: `C:\Project\PresensiKu\releases\production\KelasKu-v1.4.2-production.apk` (59,605,421 bytes). Package: `com.presensiku.presensiku`; Android 7.0 / API 24 or later. APK SHA-256: `BCEEFF4A6A745CEE230E7D214049A683BAE5528640D764BBEF8942C1FCDF9548`. The previous production APK is preserved at `releases/production/KelasKu-v1.4.1-production.apk`; see [v1.4.2 release notes](RELEASE_NOTES_1.4.2.md) for certificate fingerprints and validation.
 
 The production and QA APKs have different signing certificates. **Do not install the production APK over an existing QA installation** or uninstall the QA app to make it install. First export a `.pkbackup` and keep two off-device copies. Test a fresh production installation and real V5 backup restoration on a spare device or emulator. Migrate the phone only after that test and a separate owner-approved plan. The phone's actual installed certificate and restore result have not been verified.
 
 For a fresh installation on a spare device, copy the production APK to the device and open it from the file manager. Alternatively, enable USB debugging on that spare device and run:
 
 ```powershell
-& 'C:\Android\Sdk\platform-tools\adb.exe' install 'C:\Project\PresensiKu\releases\production\KelasKu-v1.4.1-production.apk'
+& 'C:\Android\Sdk\platform-tools\adb.exe' install 'C:\Project\PresensiKu\releases\production\KelasKu-v1.4.2-production.apk'
 ```
 
 Open KelasKu and enter the teacher profile, create an academic period and class, and add students and subjects. Choose Mulai Kelas → Pilih Kelas → Mata Pelajaran, then use Presensi for H/S/I/A attendance or Penilaian for grades. The selected class and subject carry into attendance setup. Create assessments, enter each student's score or EX, set weights totaling 100%, and open Rekap Nilai. The app labels incomplete results as provisional. Use Ekspor Nilai Excel to save or share the four-sheet workbook.
 
-The 1.4.1 APK uses the permanent owner-controlled production key. The QA APK remains separately preserved with its original debug certificate. No signing credentials are tracked. Protect the permanent key and its password according to [production signing and migration](PRODUCTION_SIGNING.md).
+The 1.4.2 APK uses the same permanent owner-controlled production key as 1.4.1. The QA APK remains separately preserved with its original debug certificate. No signing credentials are tracked. Protect the permanent key and its password according to [production signing and migration](PRODUCTION_SIGNING.md).
 
 ## Verification limits and GitHub
 
 No Android device or emulator was available for installation, launch, airplane-mode tests, native file dialogs, or screen comparison. Automated tests do not replace those checks. Follow the manual QA checklist before relying on the app for daily records.
 
-The 1.4.1 production APK verification, metadata, signing result, and test count are recorded in [RELEASE_NOTES_1.4.1.md](RELEASE_NOTES_1.4.1.md). The automated suite covers populated V1/V2/V3 migrations into V5, semester cycles, attendance regression, grading, XLSX, and V1/V2/V3 backup restoration. Native Android picker/share and device visual checks require the manual checklist.
+The 1.4.2 production APK verification, metadata, signing result, and test count are recorded in [RELEASE_NOTES_1.4.2.md](RELEASE_NOTES_1.4.2.md). The automated suite covers populated V1/V2/V3 migrations into V5, semester cycles, attendance regression, grading, XLSX, and V1/V2/V3 backup restoration. Native Android picker/share and device visual checks require the manual checklist.
 
 GitHub synchronization remains blocked by the earlier automatic approval denial. No bypass or retry was attempted. A future push requires explicit authorization and approval by the applicable mechanism.
 

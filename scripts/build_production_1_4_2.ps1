@@ -48,7 +48,7 @@ try {
 if (-not (Test-Path -LiteralPath $builtApk)) { throw 'Flutter did not produce an APK.' }
 $signature = & $apksigner verify --print-certs $builtApk
 if ($LASTEXITCODE -ne 0) { throw 'APK signature verification failed.' }
-if ($signature -notmatch '500b34efbb470855b3fbb9ec721eeb2a1be9af0e2d4fdb979d10b9b46889bda1') {
+if (-not ($signature -match '500b34efbb470855b3fbb9ec721eeb2a1be9af0e2d4fdb979d10b9b46889bda1')) {
     throw 'The APK does not use the existing KelasKu production certificate. No artifact was copied.'
 }
 New-Item -ItemType Directory -Path $productionDirectory -Force | Out-Null
