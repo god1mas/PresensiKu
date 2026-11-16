@@ -225,3 +225,11 @@
 - Signing: release-mode QA build uses Android Debug certificate SHA-256 `e25c8af199928e96c035770b423bf522680c8aef3449e153555148e5ff2d1e3e`, identical to preserved `KelasKu-1.3.0+4-qa.apk` (version code 4, SHA-256 `E1C3B2424AE9CBA865FD4EA3207717DDDC65C0CC9B3A7D77E6CD74B7003F4256`). This supports updates from that specific APK; the installed phone certificate remains unverified.
 - `dart format lib test` completed, `flutter analyze --no-pub` found no issues, and the full `flutter test --no-pub` suite passed 61/61 before packaging. Populated migrations, V1/V2/V3 backups, school/university semester behavior, class archive restoration, attendance, grading, and both Excel exports are covered.
 - `adb devices -l` found no connected device. Installation/data retention, native file picker/share, airplane mode, and visual Figma comparison remain PENDING in `ANDROID_QA_CHECKLIST.md`. Do not uninstall to force an update. No GitHub push attempted because prior automatic approval denied it; remote synchronization still needs explicit authorization and approval.
+
+## KelasKu 1.4.1+6 production signing — in progress (2026-11-17)
+
+- Preserved the 1.4.0+5 QA APK as a read-only copy; SHA-256 `124730A4A3DC1B8719B8B05E9272DB2E9C56CEBA02B10F21547A4B67A9E813CC`.
+- Changed the release variant to a dedicated production signing configuration that reads keystore path/password from process environment. A release dry run without credentials failed as intended; a debug dry run succeeded. No debug-key fallback remains.
+- Added an interactive owner-operated script to create an RSA 4096 PKCS#12 key outside Git, build version 1.4.1+6, reject the known debug certificate, and copy the verified artifact to an ignored production directory. No key or password has been created or entered by the agent.
+- `dart format lib test` changed no files; `flutter analyze --no-pub` found no issues; complete `flutter test --no-pub` passed 61/61.
+- Next: Owner runs `scripts/build_production.ps1` locally and enters the permanent password at keytool/secure PowerShell prompts. Then verify APK manifest, production certificate, alignment, SHA-256/size; finalize notes and local commit. Device migration stays pending. No GitHub push.

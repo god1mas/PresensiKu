@@ -4,6 +4,20 @@ plugins {
     id("dev.flutter.flutter-gradle-plugin")
 }
 
+val productionKeystorePath = System.getenv("KELASKU_RELEASE_KEYSTORE")?.takeIf { it.isNotBlank() }
+val productionKeystorePassword = System.getenv("KELASKU_KEYSTORE_PASSWORD")?.takeIf { it.isNotBlank() }
+val releaseRequested = gradle.startParameter.taskNames.any {
+    it.contains("release", ignoreCase = true)
+}
+if (releaseRequested && (productionKeystorePath == null || productionKeystorePassword == null)) {
+    throw GradleException(
+        "Release signing requires KELASKU_RELEASE_KEYSTORE and KELASKU_KEYSTORE_PASSWORD."
+    )
+}
+if (releaseRequested && !file(productionKeystorePath!!).isFile) {
+    throw GradleException("The production keystore file does not exist.")
+}
+
 android {
     namespace = "com.presensiku.presensiku"
     compileSdk = flutter.compileSdkVersion
@@ -29,11 +43,20 @@ android {
         versionName = flutter.versionName
     }
 
+    signingConfigs {
+        create("production") {
+            if (productionKeystorePath != null && productionKeystorePassword != null) {
+                storeFile = file(productionKeystorePath)
+                storePassword = productionKeystorePassword
+                keyAlias = "kelasku_release"
+                keyPassword = productionKeystorePassword
+            }
+        }
+    }
+
     buildTypes {
         release {
-            // TODO: Add your own signing config for the release build.
-            // Signing with the debug keys for now, so `flutter run --release` works.
-            signingConfig = signingConfigs.getByName("debug")
+            signingConfig = signingConfigs.getByName("production")
         }
     }
 }

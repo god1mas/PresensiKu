@@ -65,3 +65,11 @@ SQLite V1/V2→V3 migrations, V1/V2/V3 backup formats, and the 40-student flow a
 - [ ] Open Riwayat Penilaian and filter by search text, class, subject, academic period, and date. Check filter chips/reset and detail navigation on a narrow screen and with large text. Check Riwayat Presensi filters too.
 - [ ] Save/share attendance and grading workbooks through Android picker/share sheets. Confirm the four grading sheets including Matriks Nilai, and verify legacy V1/V2/V3 backup restore in disposable sample data.
 - [ ] Repeat semester switching, attendance draft recovery, Excel export, backup/restore, and app restart in airplane mode. Check all revised screens for overflow and scroll reachability against the existing Figma references.
+
+## KelasKu 1.4.1 production certificate migration (PENDING)
+
+- [ ] Keep the installed QA app intact. Export a V5 `.pkbackup`, copy it off-device twice, and record its SHA-256.
+- [ ] Verify the production APK uses package `com.presensiku.presensiku`, version code 6, and the production certificate documented in its release notes. Confirm its certificate differs from the QA debug certificate.
+- [ ] Fresh-install the production APK on a spare device or emulator. Restore the real-format V5 `.pkbackup` there, then restart and compare profile, class/subject configuration, students, attendance, grades, weights, and archives.
+- [ ] Open and verify both attendance and four-sheet grade XLSX exports after restore. Test native save/share pickers and airplane mode.
+- [ ] Record screenshots and any errors. Do not uninstall, clear, or force-update the existing QA installation during this verification. Plan a separate owner-approved migration only after spare-device restore succeeds.

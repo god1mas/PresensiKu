@@ -21,6 +21,8 @@ $env:GRADLE_USER_HOME = 'C:\Project\PresensiKu\.tooling\gradle'
 
 The `.tooling` directory is local and excluded from Git. Install Flutter separately if this directory is absent.
 
+Production signing uses a permanent owner-controlled key outside this repository. See [production signing and migration](PRODUCTION_SIGNING.md) for the interactive build process and the safety requirements for moving from the differently signed QA APK.
+
 ## Data
 
 SQLite is the sole operational datastore. The V1→V2 migration adds grading; V2→V3 adds class colors. V4/V5 add education levels, academic-year identity, semester-aware class mapping, stable student identity, and period-aware attendance. Existing records and IDs are preserved during migration. School classes, rosters, subjects, and colors carry from Ganjil to Genap within one year; attendance and grading begin fresh each semester. University classes and enrollment belong to one semester. Figma SVG assets and fonts are bundled locally. No login, cloud database, or telemetry is configured.

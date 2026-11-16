@@ -15,4 +15,7 @@ android/local.properties
 android/key.properties
 *.jks
 *.keystore
+*.p12
+*.pfx
 *.apk
+releases/production/
