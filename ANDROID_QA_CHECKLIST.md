@@ -73,3 +73,11 @@ SQLite V1/V2→V3 migrations, V1/V2/V3 backup formats, and the 40-student flow a
 - [ ] Fresh-install the production APK on a spare device or emulator. Restore the real-format V5 `.pkbackup` there, then restart and compare profile, class/subject configuration, students, attendance, grades, weights, and archives.
 - [ ] Open and verify both attendance and four-sheet grade XLSX exports after restore. Test native save/share pickers and airplane mode.
 - [ ] Record screenshots and any errors. Do not uninstall, clear, or force-update the existing QA installation during this verification. Plan a separate owner-approved migration only after spare-device restore succeeds.
+
+## KelasKu 1.4.2 guide and About acceptance (PENDING on device)
+
+- [ ] On a spare device, open Pengaturan → Panduan Penggunaan. Expand/collapse all ten topics; verify the steps work offline and fit narrow screens with large text.
+- [ ] Test school and university profiles separately. Confirm Guru/Siswa/Mata Pelajaran versus Dosen/Mahasiswa/Mata Kuliah/NIM wording, including the correct semester behavior.
+- [ ] Open Pengaturan → Tentang KelasKu. Confirm logo, by god1mas, developer, copyright notice, and the installed version shown from Android metadata.
+- [ ] Open Lisensi Pihak Ketiga, then use Android Back to return to About, guide, and Pengaturan without losing navigation state.
+- [ ] On a spare device already running production-signed 1.4.1, back up first, update to production-signed 1.4.2, restart, and confirm profile, classes, attendance, grades, and archives remain intact. Do not use this update test on the debug-signed QA installation.

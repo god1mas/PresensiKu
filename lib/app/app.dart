@@ -16,6 +16,7 @@ import '../features/reports/data/report_repository.dart';
 import '../features/reports/presentation/report_screens.dart';
 import '../features/settings/presentation/backup_screen.dart';
 import '../features/settings/presentation/period_settings_screen.dart';
+import '../features/settings/presentation/help_screens.dart';
 import 'phase2_tabs.dart';
 import 'feature_selection_screens.dart';
 
@@ -96,6 +97,14 @@ final appRouterProvider = Provider<GoRouter>((ref) {
           GoRoute(
             path: '/periode',
             builder: (context, state) => const PeriodSettingsScreen(),
+          ),
+          GoRoute(
+            path: '/panduan',
+            builder: (context, state) => const UserGuideScreen(),
+          ),
+          GoRoute(
+            path: '/tentang',
+            builder: (context, state) => const AboutKelasKuScreen(),
           ),
           ShellRoute(
             builder: (context, state, child) => AppShell(child: child),

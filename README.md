@@ -35,6 +35,8 @@ Teacher onboarding, dashboard, academic periods, classes, students, subjects, at
 
 Version 1.4 adds education-level terminology, separate school-year and university semester models, class archive recovery, and period-aware attendance and grading history. Opening a historical period does not activate it. Attendance Excel preserves NIM text in university detail and summary sheets.
 
+Version 1.4.2 adds offline Panduan Penggunaan and Tentang KelasKu under Pengaturan. The guide adapts school and university terminology; About reads the installed version from Android and opens Flutter's third-party license notices.
+
 ## Install and use
 
 KelasKu 1.4.1 (code 6) production-signed APK: `C:\Project\PresensiKu\releases\production\KelasKu-v1.4.1-production.apk` (59,588,113 bytes). Package: `com.presensiku.presensiku`; Android 7.0 / API 24 or later. APK SHA-256: `3CD07324E1E50B6288938F2FB8763B1871F2C887B2E264AF4FFE9D77E91B24F8`. The preserved 1.4.0+5 QA APK is `C:\Project\PresensiKu\build\app\outputs\flutter-apk\KelasKu-1.4.0+5-qa.apk`. See [v1.4.1 release notes](RELEASE_NOTES_1.4.1.md) for certificate fingerprints and validation.

@@ -284,6 +284,25 @@ class SettingsTab extends ConsumerWidget {
                     onTap: () => context.push('/pulihkan'),
                   ),
                   const SizedBox(height: AppSpace.lg),
+                  Text(
+                    'Bantuan & informasi',
+                    style: Theme.of(context).textTheme.titleLarge,
+                  ),
+                  ListTile(
+                    leading: const Icon(Icons.menu_book_outlined),
+                    title: const Text('Panduan Penggunaan'),
+                    subtitle: const Text('Langkah singkat menggunakan KelasKu'),
+                    trailing: const Icon(Icons.chevron_right),
+                    onTap: () => context.push('/panduan'),
+                  ),
+                  ListTile(
+                    leading: const Icon(Icons.info_outline),
+                    title: const Text('Tentang KelasKu'),
+                    subtitle: const Text('Versi, pengembang, dan hak cipta'),
+                    trailing: const Icon(Icons.chevron_right),
+                    onTap: () => context.push('/tentang'),
+                  ),
+                  const SizedBox(height: AppSpace.lg),
                   Container(
                     padding: const EdgeInsets.all(AppSpace.base),
                     decoration: BoxDecoration(
