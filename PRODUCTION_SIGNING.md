@@ -4,7 +4,9 @@ The production key is permanent. Keep it outside this repository at `%USERPROFIL
 
 ## Build
 
-From the project root, run `& .\scripts\build_production.ps1` in an interactive PowerShell terminal. On first run, keytool asks for the permanent password and certificate identity. The script then prompts for the password again to build `1.4.1+6`. It verifies the APK signature differs from the known QA debug certificate before copying the result to `releases/production/KelasKu-v1.4.1-production.apk`. The script refuses to overwrite an existing production artifact or key.
+From the project root, run `& .\scripts\build_production.ps1` in an interactive PowerShell terminal. On first run, keytool asks for the permanent password and certificate identity. The script then prompts for the password again to build `1.4.1+6`. It verifies the APK signature differs from the known QA debug certificate before copying the result to `releases/production/KelasKu-v1.4.1-production.apk`. The script reuses an existing key and refuses to overwrite an existing production artifact.
+
+The verified production certificate SHA-256 fingerprint is `500b34efbb470855b3fbb9ec721eeb2a1be9af0e2d4fdb979d10b9b46889bda1`. Record it in private key inventory as well. The APK checksum, size, and SDK verification are in [RELEASE_NOTES_1.4.1.md](RELEASE_NOTES_1.4.1.md).
 
 Gradle release builds require `KELASKU_RELEASE_KEYSTORE` and `KELASKU_KEYSTORE_PASSWORD` environment variables and fail when they are missing. The release variant uses only the `production` signing config. Debug builds keep Android's debug signing. Do not use `flutter build apk --release` from another terminal unless these variables are set securely for that process.
 

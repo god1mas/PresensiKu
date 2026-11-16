@@ -37,25 +37,25 @@ Version 1.4 adds education-level terminology, separate school-year and universit
 
 ## Install and use
 
-KelasKu 1.4.0 (code 5) QA APK: `C:\Project\PresensiKu\build\app\outputs\flutter-apk\app-release.apk` (59,588,113 bytes). Package: `com.presensiku.presensiku`; Android 7.0 / API 24 or later. SHA-256: `124730A4A3DC1B8719B8B05E9272DB2E9C56CEBA02B10F21547A4B67A9E813CC`. See [v1.4.0 release notes](RELEASE_NOTES_1.4.0.md).
+KelasKu 1.4.1 (code 6) production-signed APK: `C:\Project\PresensiKu\releases\production\KelasKu-v1.4.1-production.apk` (59,588,113 bytes). Package: `com.presensiku.presensiku`; Android 7.0 / API 24 or later. APK SHA-256: `3CD07324E1E50B6288938F2FB8763B1871F2C887B2E264AF4FFE9D77E91B24F8`. The preserved 1.4.0+5 QA APK is `C:\Project\PresensiKu\build\app\outputs\flutter-apk\KelasKu-1.4.0+5-qa.apk`. See [v1.4.1 release notes](RELEASE_NOTES_1.4.1.md) for certificate fingerprints and validation.
 
-The previous KelasKu 1.3.0 (code 4) QA APK is preserved at `C:\Project\PresensiKu\build\app\outputs\flutter-apk\KelasKu-1.3.0+4-qa.apk`. Both APKs have the same debug signing certificate SHA-256 fingerprint: `e25c8af199928e96c035770b423bf522680c8aef3449e153555148e5ff2d1e3e`. This supports an in-place update from that specific previous APK, but installation on a physical device has not yet been tested. Back up your data first; never uninstall the app to force an update.
+The production and QA APKs have different signing certificates. **Do not install the production APK over an existing QA installation** or uninstall the QA app to make it install. First export a `.pkbackup` and keep two off-device copies. Test a fresh production installation and real V5 backup restoration on a spare device or emulator. Migrate the phone only after that test and a separate owner-approved plan. The phone's actual installed certificate and restore result have not been verified.
 
-Copy the KelasKu APK to an Android phone and open it from the file manager. Alternatively, enable USB debugging, connect the phone, and run:
+For a fresh installation on a spare device, copy the production APK to the device and open it from the file manager. Alternatively, enable USB debugging on that spare device and run:
 
 ```powershell
-& 'C:\Android\Sdk\platform-tools\adb.exe' install -r 'C:\Project\PresensiKu\build\app\outputs\flutter-apk\app-release.apk'
+& 'C:\Android\Sdk\platform-tools\adb.exe' install 'C:\Project\PresensiKu\releases\production\KelasKu-v1.4.1-production.apk'
 ```
 
 Open KelasKu and enter the teacher profile, create an academic period and class, and add students and subjects. Choose Mulai Kelas → Pilih Kelas → Mata Pelajaran, then use Presensi for H/S/I/A attendance or Penilaian for grades. The selected class and subject carry into attendance setup. Create assessments, enter each student's score or EX, set weights totaling 100%, and open Rekap Nilai. The app labels incomplete results as provisional. Use Ekspor Nilai Excel to save or share the four-sheet workbook.
 
-This release-mode QA build uses the Android **debug signing key**, as configured in `android/app/build.gradle.kts`. It is intended for local installation and QA; production distribution requires an owner-controlled release key and signing configuration. No signing credentials are tracked. Back up app data before changing signing keys or uninstalling: an APK signed with another key cannot update the installed app directly.
+The 1.4.1 APK uses the permanent owner-controlled production key. The QA APK remains separately preserved with its original debug certificate. No signing credentials are tracked. Protect the permanent key and its password according to [production signing and migration](PRODUCTION_SIGNING.md).
 
 ## Verification limits and GitHub
 
 No Android device or emulator was available for installation, launch, airplane-mode tests, native file dialogs, or screen comparison. Automated tests do not replace those checks. Follow the manual QA checklist before relying on the app for daily records.
 
-The 1.4.0 release verification, APK metadata, signing result, and test count are recorded in [RELEASE_NOTES_1.4.0.md](RELEASE_NOTES_1.4.0.md). The automated suite covers populated V1/V2/V3 migrations into V5, semester cycles, attendance regression, grading, XLSX, and V1/V2/V3 backup restoration. Native Android picker/share and device visual checks require the manual checklist.
+The 1.4.1 production APK verification, metadata, signing result, and test count are recorded in [RELEASE_NOTES_1.4.1.md](RELEASE_NOTES_1.4.1.md). The automated suite covers populated V1/V2/V3 migrations into V5, semester cycles, attendance regression, grading, XLSX, and V1/V2/V3 backup restoration. Native Android picker/share and device visual checks require the manual checklist.
 
 GitHub synchronization remains blocked by the earlier automatic approval denial. No bypass or retry was attempted. A future push requires explicit authorization and approval by the applicable mechanism.
 
